@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.LeoBlog.mapper.ChatRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.chen.LeoBlog.po.ChatRecord">
+            <id property="recordId" column="record_id" jdbcType="BIGINT"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
+            <result property="receiverId" column="receiver_id" jdbcType="BIGINT"/>
+            <result property="recordContent" column="record_content" jdbcType="VARCHAR"/>
+            <result property="recordUpdateTime" column="record_update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        record_id,user_id,receiver_id,
+        record_content,record_update_time
+    </sql>
+</mapper>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.LeoBlog.mapper.LabelMapper">
+
+    <resultMap id="BaseResultMap" type="com.chen.LeoBlog.po.Label">
+            <id property="labelId" column="label_id" jdbcType="BIGINT"/>
+            <result property="labelName" column="label_name" jdbcType="VARCHAR"/>
+            <result property="labelAlias" column="label_alias" jdbcType="VARCHAR"/>
+            <result property="labelDescription" column="label_description" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        label_id,label_name,label_alias,
+        label_description
+    </sql>
+</mapper>

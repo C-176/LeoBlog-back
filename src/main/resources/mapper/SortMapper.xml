@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.LeoBlog.mapper.SortMapper">
+
+    <resultMap id="BaseResultMap" type="com.chen.LeoBlog.po.Sort">
+            <id property="sortId" column="sort_id" jdbcType="BIGINT"/>
+            <result property="sortName" column="sort_name" jdbcType="VARCHAR"/>
+            <result property="sortAlias" column="sort_alias" jdbcType="VARCHAR"/>
+            <result property="sortDescription" column="sort_description" jdbcType="VARCHAR"/>
+            <result property="parentSortId" column="parent_sort_id" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        sort_id,sort_name,sort_alias,
+        sort_description,parent_sort_id
+    </sql>
+</mapper>
