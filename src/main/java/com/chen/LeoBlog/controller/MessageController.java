@@ -26,8 +26,8 @@ public class MessageController {
         return messageService.addMessage(map);
     }
 
-    @DeleteMapping("/{id}")
-    public ResultInfo deleteMessage(@PathVariable("id") Long id) {
-        return messageService.deleteMessage(id);
+    @DeleteMapping("/{messageId}")
+    public ResultInfo deleteMessage(@PathVariable("messageId") Long messageId) {
+        return messageService.deleteMessage(messageId);
     }
 }
