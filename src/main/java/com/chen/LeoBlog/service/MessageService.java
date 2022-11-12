@@ -17,5 +17,5 @@ public interface MessageService extends IService<Message> {
 
     ResultInfo addMessage(Map<String, Object> map);
 
-    ResultInfo deleteMessage(Long id);
+    ResultInfo deleteMessage(Long messageId);
 }
