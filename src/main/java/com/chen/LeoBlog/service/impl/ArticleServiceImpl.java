@@ -1,30 +1,23 @@
 package com.chen.LeoBlog.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
-import com.chen.LeoBlog.dto.UserDto;
 import com.chen.LeoBlog.mapper.ArticleMapper;
 import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.po.Label;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.*;
 import com.chen.LeoBlog.utils.IdUtil;
-import com.sun.tools.jconsole.JConsoleContext;
-import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import springfox.documentation.spring.web.json.Json;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -105,18 +98,18 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
 
     @Override
     public ResultInfo deleteArticle(Long articleId) {
-        //只有作者才能删除，需要判断
-        UserDto user = Local.getUser();
-        if (user == null) return ResultInfo.fail("请先登录");
-        Long userId = user.getUserId();
-        System.out.println(Local.getUser());
+//        //只有作者才能删除，需要判断
+//        UserDto user = Local.getUser();
+//        if (user == null) return ResultInfo.fail("请先登录");
+//        Long userId = user.getUserId();
+//        System.out.println(Local.getUser());
         Article article = query().eq("article_id", articleId).one();
         if (article == null) {
-            return ResultInfo.fail("该文章不存在");
+            return ResultInfo.fail("该文章不存在，请刷新页面");
         }
-        if (article.getUserId() != userId) {
-            return ResultInfo.fail("权限不足");
-        }
+//        if (article.getUserId() != userId) {
+//            return ResultInfo.fail("权限不足");
+//        }
         boolean isSuccess = update().eq("article_id", articleId).remove();
         commentService.deleteCommentByArticleId(articleId);
         if (!isSuccess) {

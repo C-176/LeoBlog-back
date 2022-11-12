@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.LeoBlog.mapper.MessageMapper">
+
+    <resultMap id="BaseResultMap" type="com.chen.LeoBlog.po.Message">
+        <id property="messageId" column="message_id" jdbcType="BIGINT"/>
+        <result property="userId" column="user_id" jdbcType="BIGINT"/>
+        <result property="receiverId" column="receiver_id" jdbcType="BIGINT"/>
+        <result property="messageTitle" column="message_title" jdbcType="VARCHAR"/>
+        <result property="messageContent" column="message_content" jdbcType="VARCHAR"/>
+        <result property="messageUpdateTime" column="message_update_time" jdbcType="TIMESTAMP"/>
+        <result property="messageType" column="message_type" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        message_id,user_id,receiver_id,
+        message_title,message_content,message_update_time,
+        message_type
+    </sql>
+</mapper>

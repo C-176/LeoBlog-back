@@ -8,14 +8,12 @@ import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -26,14 +24,18 @@ public class UserController {
     @Resource
     private UserService userService;
 
+    private LineCaptcha lineCaptcha;
+
     @PostMapping("/login")
-    public ResultInfo login(@RequestBody Map<String,Object> map, @RequestHeader(value="Authorization",defaultValue = "",required = false) String token){
-        return userService.login(map,token);
+    public ResultInfo login(@RequestBody Map<String, Object> map, @RequestHeader(value = "Authorization", defaultValue = "", required = false) String token) {
+        return userService.login(map, token, lineCaptcha);
     }
+
     @PostMapping("/register")
-    public ResultInfo register(@RequestBody Map<String,Object> map){
+    public ResultInfo register(@RequestBody Map<String, Object> map) {
         return userService.register(map);
     }
+
     //发送验证码
     @GetMapping("/confirm/phone/{phone}")
     public ResultInfo confirmPhone(@PathVariable("phone") String phone){
@@ -47,9 +49,9 @@ public class UserController {
     }
 
     @RequestMapping("/getCaptcha")
-    public void getCaptcha(HttpServletResponse response){
-        //HuTool定义图形验证码的长和宽,验证码的位数，干扰线的条数
-        LineCaptcha lineCaptcha = CaptchaUtil.createLineCaptcha(116, 36, 4, 20);
+    public void getCaptcha(HttpServletResponse response) {
+        lineCaptcha = CaptchaUtil.createLineCaptcha(116, 36, 4, 20);
+
         StrUtil.format("Captcha: {}", lineCaptcha.getCode());
         response.setContentType("image/jpeg");
         response.setHeader("Pragma", "No-cache");
@@ -58,7 +60,7 @@ public class UserController {
             lineCaptcha.write(outputStream);
             outputStream.close();
         } catch (IOException e) {
-            log.error("图片验证码加载失败",e);
+            log.error("图片验证码加载失败", e);
         }
     }
     @ApiOperation("根据用户id获取用户名称")

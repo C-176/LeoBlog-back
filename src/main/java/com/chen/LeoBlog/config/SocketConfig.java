@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.server.standard.ServerEndpointExporter;
+import org.springframework.web.socket.server.standard.ServletServerContainerFactoryBean;
 
 /**
  * WebSocket配置类
@@ -14,7 +15,17 @@ import org.springframework.web.socket.server.standard.ServerEndpointExporter;
 public class SocketConfig {
 
     @Bean
-    public ServerEndpointExporter serverEndpointExporter(){
+    public ServerEndpointExporter serverEndpointExporter() {
         return new ServerEndpointExporter();
+    }
+
+    @Bean
+    public ServletServerContainerFactoryBean createWebSocketContainer() {
+        ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
+        // 在此处设置bufferSize
+        container.setMaxTextMessageBufferSize(1512000);
+        container.setMaxBinaryMessageBufferSize(1512000);
+        container.setMaxSessionIdleTimeout(15 * 60000L);
+        return container;
     }
 }

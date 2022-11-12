@@ -2,20 +2,18 @@ package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.captcha.LineCaptcha;
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.chen.LeoBlog.base.CodeSender;
 import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.base.ResultInfo;
+import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDto;
 import com.chen.LeoBlog.mapper.UserMapper;
-import com.chen.LeoBlog.constant.RedisConstant;
-import com.chen.LeoBlog.base.CodeSender;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
 import com.chen.LeoBlog.utils.IdUtil;
@@ -24,7 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -44,29 +45,31 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private StringRedisTemplate redisTemplate;
     @Autowired
     private IdUtil idUtil;
-    private LineCaptcha lineCaptcha;
 
     @Override
-    public ResultInfo login(Map<String, Object> map, String token) {
-        if(token==null || StrUtil.isEmpty(token)){
+    public ResultInfo login(Map<String, Object> map, String token, LineCaptcha lineCaptcha) {
+        if (token == null || StrUtil.isEmpty(token)) {
             token = getToken();
         }
         //从map中取出用户名和密码，验证码，手机号，邮箱
         String username = (String) map.get("userName");
         String password = (String) map.get("userPassword");
         String captcha = (String) map.get("captcha");
-        String phone = (String) map.getOrDefault("userPhone",null);
-        String email = (String) map.getOrDefault("userEmail",null);
-//        if(!lineCaptcha.verify(captcha)) return ResultInfo.fail("验证码错误");
+        String phone = (String) map.getOrDefault("userPhone", null);
+        String email = (String) map.getOrDefault("userEmail", null);
+        if (StrUtil.isBlank(captcha)) {
+            return ResultInfo.fail("验证码不可为空");
+        }
+        if (!lineCaptcha.verify(captcha)) return ResultInfo.fail("验证码错误");
 
         //判断用户名和密码是否为空
-        if (StrUtil.isBlank(password))  return ResultInfo.fail("密码不能为空");
+        if (StrUtil.isBlank(password)) return ResultInfo.fail("密码不能为空");
         User user;
         if (StrUtil.isBlank(username) && StrUtil.isBlank(email)) {
-            if (StrUtil.isBlank(phone))  return ResultInfo.fail("手机号、用户名、邮箱不能同时为空");
+            if (StrUtil.isBlank(phone)) return ResultInfo.fail("手机号、用户名、邮箱不能同时为空");
             log.info("手机号登录[{}]", phone);
             user = query().eq("user_phone", phone).one();
-            if (user == null){
+            if (user == null) {
                 return ResultInfo.fail("手机号尚未注册");
             }
         }else{
@@ -146,8 +149,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String captcha = codeSender.send(phone);
         //TODO:向手机号发送验证码
         try {
-            MailUtil.send("rtg1999@163.com","手机验证码测试","邮件来自rtg"+captcha,false);
-            log.info("手机验证码发送成功[{}]->[{}]",phone,captcha);
+            MailUtil.send("rtg1999@163.com", "手机验证码测试", "邮件来自LeoBlog\n" + captcha, false);
+            log.info("手机验证码发送成功[{}]->[{}]", phone, captcha);
         }catch (Exception e){
             log.error("发送手机验证码失败:->{}",phone,e);
         }
@@ -243,6 +246,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             if (!isCorrect) return ResultInfo.fail("验证码错误");
             //更新邮箱
             try {
+                //查询邮箱是否已经被注册，不区分大小写
+                List<User> user_email = query().eq("user_email", userEmail).list();
+                if (user_email.size() > 0) return ResultInfo.fail("邮箱已被注册");
                 update().set("user_email", userEmail).eq("user_id", userId).update();
                 redisTemplate.opsForHash().delete(key, "user");
             }catch (Exception e){
@@ -255,6 +261,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             if (!isCorrect) return ResultInfo.fail("验证码错误");
             //更新手机号
             try {
+                //查询手机号是否已经被注册，不区分大小写
+                List<User> user_phone = query().eq("user_phone", userPhone).list();
+                if (user_phone.size() > 0) return ResultInfo.fail("手机号已被注册");
                 update().set("user_phone", userPhone).eq("user_id", userId).update();
                 redisTemplate.opsForHash().delete(key, "user");
             }catch (Exception e){

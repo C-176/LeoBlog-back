@@ -1,10 +1,10 @@
 package com.chen.LeoBlog.service;
 
+import cn.hutool.captcha.LineCaptcha;
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.User;
-import com.baomidou.mybatisplus.extension.service.IService;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -14,7 +14,7 @@ import java.util.Map;
 */
 public interface UserService extends IService<User> {
 
-    ResultInfo login(Map<String, Object> map, String token);
+    ResultInfo login(Map<String, Object> map, String token, LineCaptcha lineCaptcha);
 
     ResultInfo register(Map<String, Object> map);
 

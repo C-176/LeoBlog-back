@@ -1,5 +1,6 @@
 package com.chen.LeoBlog.base;
 
+
 import cn.hutool.core.util.RandomUtil;
 import com.chen.LeoBlog.constant.RedisConstant;
 import lombok.extern.slf4j.Slf4j;
@@ -12,10 +13,12 @@ import java.util.concurrent.TimeUnit;
 @Component
 @Slf4j
 public class CodeSender {
+
     private static String code;
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
 
     public String send(String type) {
         // 生成6位验证码

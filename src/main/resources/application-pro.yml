@@ -5,9 +5,10 @@ server:
     context-path: /
 
 static-path:
-  /www/server/nginx/html/backend/source/upload/images/
-
-  #  静态资源
+  /www/server/nginx/html/backend/
+ip:
+  49.235.100.240:8080
+#  静态资源
 #  Path: src/main/resources/static
 spring:
   redis:
@@ -45,8 +46,8 @@ spring:
 
   servlet:
     multipart:
-      max-file-size: 2MB #单个文件最大为20M
-      max-request-size: 20MB #单次请求文件总数大小为20M
+      max-file-size: 200MB #单个文件最大为20M
+      max-request-size: 200MB #单次请求文件总数大小为20M
 
 #
 #mybatis:

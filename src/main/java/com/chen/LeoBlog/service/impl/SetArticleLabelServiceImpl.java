@@ -1,10 +1,10 @@
 package com.chen.LeoBlog.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chen.LeoBlog.base.ResultInfo;
+import com.chen.LeoBlog.mapper.SetArticleLabelMapper;
 import com.chen.LeoBlog.po.SetArticleLabel;
 import com.chen.LeoBlog.service.SetArticleLabelService;
-import com.chen.LeoBlog.mapper.SetArticleLabelMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +15,7 @@ import java.util.List;
 * @createDate 2022-10-21 22:51:46
 */
 @Service
+@Slf4j
 public class SetArticleLabelServiceImpl extends ServiceImpl<SetArticleLabelMapper, SetArticleLabel>
     implements SetArticleLabelService{
 
@@ -28,10 +29,13 @@ public class SetArticleLabelServiceImpl extends ServiceImpl<SetArticleLabelMappe
 
     @Override
     public boolean setLabelList(Long articleId, List<Long> labelIds) {
-        for(Long labelId : labelIds){
-
+        if (labelIds == null || labelIds.size() == 0) {
+            log.info("标签为空");
+            return true;
+        }
+        for (Long labelId : labelIds) {
             SetArticleLabel one = query().eq("article_id", articleId).eq("label_id", labelId).one();
-            if (one == null){
+            if (one == null) {
                 SetArticleLabel setArticleLabel = new SetArticleLabel();
                 setArticleLabel.setArticleId(articleId);
                 setArticleLabel.setLabelId(labelId);

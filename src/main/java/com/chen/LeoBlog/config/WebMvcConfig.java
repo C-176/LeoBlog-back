@@ -2,7 +2,6 @@ package com.chen.LeoBlog.config;
 
 import com.chen.LeoBlog.interceptors.NoLoginInterceptor;
 import com.chen.LeoBlog.interceptors.RefreshTTLInterceptor;
-import lombok.experimental.Accessors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,8 +11,6 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import javax.annotation.Resource;
 
 @Configuration
 @Slf4j
@@ -33,7 +30,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         //解决方法:将虚拟路径/source/upload/images/
         //        向绝对路径 (D:\\Javacode\\LeoBlog\\src\\main\\resources\\static\\source\\upload\\images\\)映射
 
-        registry.addResourceHandler("/source/upload/images/**").addResourceLocations("file:" + path);
+        registry.addResourceHandler("/**").addResourceLocations("file:" + path);
 
     }
 

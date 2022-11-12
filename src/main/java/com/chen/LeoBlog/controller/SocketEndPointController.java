@@ -86,7 +86,7 @@ public class SocketEndPointController {
                 Map<String, Object> map = new HashMap<>();
                 map.put("userId", 1);
                 map.put("receiveId", k);
-                map.put("message", socketEndpoint.userService.query().eq("user_id", userId).one().getUserName() + "已连接");
+                map.put("message", socketEndpoint.userService.query().eq("user_id", userId).one().getUserNickname() + " 已连接");
                 map.put("update_time", DateUtil.now());
                 map.put("type", 1); // 1:上线通知 2:下线通知 3:聊天消息
                 socketEndpoint.socketService.sendMessage(v, JSONUtil.toJsonStr(map));
@@ -103,11 +103,17 @@ public class SocketEndPointController {
         Map<String, Object> map = JSONUtil.toBean(jsonStr, Map.class);
         Long userId = Long.parseLong(map.get("userId").toString());
         Long receiverId = Long.parseLong(map.get("receiverId").toString());
-        SocketPool.getSessionMap().forEach((k, v) -> {
-            if (StrUtil.equals(k.toString(), receiverId.toString())) {
+        if (receiverId == -1) {
+            SocketPool.getSessionMap().forEach((k, v) -> {
                 socketEndpoint.socketService.sendMessage(v, JSONUtil.toJsonStr(map));
-            }
-        });
+            });
+        } else {
+            SocketPool.getSessionMap().forEach((k, v) -> {
+                if (StrUtil.equals(k.toString(), receiverId.toString())) {
+                    socketEndpoint.socketService.sendMessage(v, JSONUtil.toJsonStr(map));
+                }
+            });
+        }
 
         try {
             // 保存聊天记录
@@ -118,6 +124,9 @@ public class SocketEndPointController {
             chatRecord.setRecordUpdateTime(new Date());
             socketEndpoint.redisTemplate.opsForZSet().add(RedisConstant.CHAT_USER_LIST + userId, receiverId.toString(), new Date().getTime());
             socketEndpoint.chatRecordService.save(chatRecord);
+            if (receiverId == -1) {
+                return;
+            }
             // 保存聊天连接
             ChatConnection chatConnection = new ChatConnection();
             chatConnection.setUserId(userId);
@@ -137,7 +146,8 @@ public class SocketEndPointController {
                             () -> socketEndpoint.chatConnectionService.save(chatConnection)
                     );
 
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             log.error("保存聊天记录失败", e);
         }
 
@@ -146,6 +156,7 @@ public class SocketEndPointController {
 
     @OnClose
     public void onClose(@PathParam("userId") Long userId, Session session) {
+
         log.info("连接关闭->userId: {}", userId);
         SocketPool.remove(userId);
         socketEndpoint.redisTemplate.opsForZSet().remove(key, userId.toString());
@@ -154,7 +165,7 @@ public class SocketEndPointController {
                 Map<String, Object> map = new HashMap<>();
                 map.put("userId", 1);
                 map.put("receiveId", k);
-                map.put("message", socketEndpoint.userService.query().eq("user_id", userId).one().getUserName() + "已断开连接");
+                map.put("message", socketEndpoint.userService.query().eq("user_id", userId).one().getUserNickname() + " 已断开连接");
                 map.put("update_time", DateUtil.now());
                 map.put("type", 2); // 1:上线通知 2:下线通知 3:聊天消息
                 socketEndpoint.socketService.sendMessage(v, JSONUtil.toJsonStr(map));
@@ -165,7 +176,10 @@ public class SocketEndPointController {
 
     @OnError
     public void onError(@PathParam("userId") Long userId, Throwable error) {
+
         onClose(userId, SocketPool.getSessionMap().get(userId));
-        log.error("发生错误->userId:{}", userId, error);
+        log.error("webSocket发生错误->userId:{}", userId, error);
     }
+
+
 }

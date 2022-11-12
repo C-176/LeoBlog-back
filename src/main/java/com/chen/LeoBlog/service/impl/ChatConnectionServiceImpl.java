@@ -1,9 +1,8 @@
 package com.chen.LeoBlog.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.base.ResultInfo;
-import com.chen.LeoBlog.dto.UserDto;
 import com.chen.LeoBlog.mapper.ChatConnectionMapper;
 import com.chen.LeoBlog.po.ChatConnection;
 import com.chen.LeoBlog.po.ChatRecord;
@@ -43,11 +42,19 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
         List<Long> ids = new ArrayList<>();
 //        ids.add(1L);
         assert members != null;
-        if(members.size()!=0){
-        for (String member : members) {
-            ids.add(Long.parseLong(member));
-        }}
+        if (members.size() != 0) {
+            List<ChatConnection> list1 = query().eq("user_id", userId)
+                    .or()
+                    .eq("chat_user_id", userId).orderByDesc("chat_last_time").list();
+            if (list1.size() != members.size()) {
+                members = new HashSet<>();
+            } else {
+                for (String member : members) {
+                    ids.add(Long.parseLong(member));
+                }
+            }
 
+        }
 
         if (members.size() == 0) {
             //拿到所有的聊天对象
@@ -62,16 +69,18 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
                     chatConnection.setChatUserId(chatUserId);
                 }
             });
-            list.forEach(user-> redisTemplate.opsForZSet().add(key,user.getChatUserId().toString(),user.getChatLastTime().getTime()));
+            //排除list中chatUserId为-1的（聊天室）
+            list.removeIf(chatConnection -> chatConnection.getChatUserId() == -1);
+            list.forEach(user -> redisTemplate.opsForZSet().add(key, user.getChatUserId().toString(), user.getChatLastTime().getTime()));
             ids.addAll(list.stream().map(ChatConnection::getChatUserId).toList());
             if (ids.size() == 0) {
                 ids.add(1L);
-                redisTemplate.opsForZSet().add(key,"1",new Date().getTime());
+                redisTemplate.opsForZSet().add(key, "1", new Date().getTime());
 //                return ResultInfo.success("暂无聊天对象，快去找人吧");
             }
 
         }
-
+        ids.add(0, -1L);
 
         //将ids的方括号去掉
         String idsStr = ids.toString().substring(1, ids.toString().length() - 1);
@@ -93,50 +102,58 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
     }
 
     @Override
-    public ResultInfo connect(Long userId,Long talkToId) {
-        if(Objects.equals(talkToId, userId)) return ResultInfo.fail("不能和自己聊天");
+    public ResultInfo connect(Long userId, Long talkToId) {
+        if (Objects.equals(talkToId, userId)) return ResultInfo.fail("不能和自己聊天");
 //        log.info("我{}正在和用户{}聊天",userId,talkToId);
 
 //        UserDto userDto = Local.getUser();
 //        if(userDto==null) return ResultInfo.fail("请先登录");
 //        Long userId = userDto.getUserId();
-        List<ChatConnection> connectionList = query().eq("user_id", userId)
-                .eq("chat_user_id", talkToId)
-                .or()
-                .eq("user_id", talkToId)
-                .eq("chat_user_id", userId).orderByDesc("chat_last_time").list();
-        if(connectionList.size() == 0){
-        ChatConnection chatConnection = new ChatConnection();
-            chatConnection.setUserId(userId);
-            chatConnection.setChatUserId(talkToId);
-            chatConnection.setChatLastTime(new Date());
-            save(chatConnection);
-        }else{
-            ChatConnection chatConnection = connectionList.get(0);
-            chatConnection.setChatLastTime(new Date());
-            updateById(chatConnection);
-        }
-        redisTemplate.opsForZSet().add(CHAT_USER_LIST+userId,talkToId.toString(),new Date().getTime());
+        List<ChatRecord> list;
+        if (talkToId == -1) {
+            list = chatRecordService.query()
+                    .eq("receiver_id", talkToId)
+                    .orderByAsc("record_update_time").list();
+        } else {
+
+            List<ChatConnection> connectionList = query().eq("user_id", userId)
+                    .eq("chat_user_id", talkToId)
+                    .or()
+                    .eq("user_id", talkToId)
+                    .eq("chat_user_id", userId).orderByDesc("chat_last_time").list();
+            if (connectionList.size() == 0) {
+                ChatConnection chatConnection = new ChatConnection();
+                chatConnection.setUserId(userId);
+                chatConnection.setChatUserId(talkToId);
+                chatConnection.setChatLastTime(new Date());
+                save(chatConnection);
+            } else {
+                ChatConnection chatConnection = connectionList.get(0);
+                chatConnection.setChatLastTime(new Date());
+                updateById(chatConnection);
+            }
+            redisTemplate.opsForZSet().add(CHAT_USER_LIST + userId, talkToId.toString(), new Date().getTime());
 
 
-
-        //查询
-        List<ChatRecord> list = chatRecordService.query()
-                .eq("user_id", userId)
-                .eq("receiver_id", talkToId)
-                .or()
-                .eq("user_id", talkToId)
-                .eq("receiver_id", userId)
-                .orderByAsc("record_update_time").list();
-        if(talkToId==1){
-            if(list.size()==0){
-                ChatRecord chatRecord = new ChatRecord();
-                chatRecord.setUserId(talkToId);
-                chatRecord.setReceiverId(userId);
-                chatRecord.setRecordContent("你好，我是LeoBlog的机器人，有什么问题可以问我哦");
-                chatRecord.setRecordUpdateTime(new Date());
-                chatRecordService.save(chatRecord);
-                list.add(chatRecord);
+            //查询
+            list = chatRecordService.query()
+                    .eq("user_id", userId)
+                    .eq("receiver_id", talkToId)
+                    .or()
+                    .eq("user_id", talkToId)
+                    .eq("receiver_id", userId)
+                    .orderByDesc("record_update_time").last("limit 50").list();
+            list = CollectionUtil.reverse(list);
+            if (talkToId == 1) {
+                if (list.size() == 0) {
+                    ChatRecord chatRecord = new ChatRecord();
+                    chatRecord.setUserId(talkToId);
+                    chatRecord.setReceiverId(userId);
+                    chatRecord.setRecordContent("你好，我是LeoBlog的机器人，有什么问题可以问我哦");
+                    chatRecord.setRecordUpdateTime(new Date());
+                    chatRecordService.save(chatRecord);
+                    list.add(chatRecord);
+                }
             }
         }
         return ResultInfo.success(list);
