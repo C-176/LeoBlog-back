@@ -40,12 +40,16 @@ public class UserController {
     @GetMapping("/confirm/phone/{phone}")
     public ResultInfo confirmPhone(@PathVariable("phone") String phone){
         return userService.confirmPhone(phone);
-
     }
     //发送验证码
     @GetMapping("/confirm/email/{email}")
     public ResultInfo confirmEmail(@PathVariable("email") String email){
         return userService.confirmEmail(email);
+    }
+
+    @PostMapping("/changePwd")
+    public ResultInfo changePwd(@RequestBody Map<String, Object> map){
+        return userService.changePwd(map);
     }
 
     @RequestMapping("/getCaptcha")

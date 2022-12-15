@@ -41,6 +41,11 @@ public class ChatRecord implements Serializable {
      */
     private Date recordUpdateTime;
 
+    /**
+     * 
+     */
+    private Integer isSaw;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

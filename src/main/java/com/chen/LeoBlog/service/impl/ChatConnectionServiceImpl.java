@@ -1,6 +1,5 @@
 package com.chen.LeoBlog.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.mapper.ChatConnectionMapper;
@@ -104,18 +103,8 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
     @Override
     public ResultInfo connect(Long userId, Long talkToId) {
         if (Objects.equals(talkToId, userId)) return ResultInfo.fail("不能和自己聊天");
-//        log.info("我{}正在和用户{}聊天",userId,talkToId);
 
-//        UserDto userDto = Local.getUser();
-//        if(userDto==null) return ResultInfo.fail("请先登录");
-//        Long userId = userDto.getUserId();
-        List<ChatRecord> list;
-        if (talkToId == -1) {
-            list = chatRecordService.query()
-                    .eq("receiver_id", talkToId)
-                    .orderByAsc("record_update_time").list();
-        } else {
-
+        if (talkToId != -1) {
             List<ChatConnection> connectionList = query().eq("user_id", userId)
                     .eq("chat_user_id", talkToId)
                     .or()
@@ -133,30 +122,8 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
                 updateById(chatConnection);
             }
             redisTemplate.opsForZSet().add(CHAT_USER_LIST + userId, talkToId.toString(), new Date().getTime());
-
-
-            //查询
-            list = chatRecordService.query()
-                    .eq("user_id", userId)
-                    .eq("receiver_id", talkToId)
-                    .or()
-                    .eq("user_id", talkToId)
-                    .eq("receiver_id", userId)
-                    .orderByDesc("record_update_time").last("limit 50").list();
-            list = CollectionUtil.reverse(list);
-            if (talkToId == 1) {
-                if (list.size() == 0) {
-                    ChatRecord chatRecord = new ChatRecord();
-                    chatRecord.setUserId(talkToId);
-                    chatRecord.setReceiverId(userId);
-                    chatRecord.setRecordContent("你好，我是LeoBlog的机器人，有什么问题可以问我哦");
-                    chatRecord.setRecordUpdateTime(new Date());
-                    chatRecordService.save(chatRecord);
-                    list.add(chatRecord);
-                }
-            }
         }
-        return ResultInfo.success(list);
+        return chatRecordService.getRecordList(userId, talkToId, 1, 50);
     }
 }
 

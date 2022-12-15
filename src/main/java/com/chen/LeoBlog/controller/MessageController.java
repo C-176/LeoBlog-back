@@ -16,9 +16,9 @@ public class MessageController {
     @Autowired
     private MessageService messageService;
 
-    @GetMapping("/user/{userId}")
-    public ResultInfo getMsgByUserId(@PathVariable("userId") Long userId) {
-        return messageService.getMsgByUserId(userId);
+    @GetMapping("/user/{userId}/{page}/{size}")
+    public ResultInfo getMsgByUserId(@PathVariable("userId") Long userId, @PathVariable(value="page") Integer page, @PathVariable("size") Integer size) {
+        return messageService.getMsgByUserId(userId, page, size);
     }
 
     @PostMapping("/add")
@@ -29,5 +29,10 @@ public class MessageController {
     @DeleteMapping("/{messageId}")
     public ResultInfo deleteMessage(@PathVariable("messageId") Long messageId) {
         return messageService.deleteMessage(messageId);
+    }
+
+    @PutMapping("/read/{messageId}")
+    public ResultInfo readMessage(@PathVariable("messageId") Long messageId) {
+        return messageService.readMessage(messageId);
     }
 }

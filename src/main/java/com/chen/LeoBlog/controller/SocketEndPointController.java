@@ -24,6 +24,7 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.util.*;
+import java.util.concurrent.Executor;
 
 import static com.chen.LeoBlog.base.SocketPool.getSessionMap;
 
@@ -48,12 +49,16 @@ public class SocketEndPointController {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    @Autowired
+    private Executor asyncExecutor;
+
     @PostConstruct
     public void init() {
         socketEndpoint = this;
         socketEndpoint.chatConnectionService = this.chatConnectionService;
         socketEndpoint.chatRecordService = this.chatRecordService;
         socketEndpoint.userService = this.userService;
+        socketEndpoint.asyncExecutor = this.asyncExecutor;
     }
 
     @PostMapping("/net/list/status")
@@ -104,9 +109,7 @@ public class SocketEndPointController {
         Long userId = Long.parseLong(map.get("userId").toString());
         Long receiverId = Long.parseLong(map.get("receiverId").toString());
         if (receiverId == -1) {
-            SocketPool.getSessionMap().forEach((k, v) -> {
-                socketEndpoint.socketService.sendMessage(v, JSONUtil.toJsonStr(map));
-            });
+            SocketPool.getSessionMap().forEach((k, v) -> socketEndpoint.socketService.sendMessage(v, JSONUtil.toJsonStr(map)));
         } else {
             SocketPool.getSessionMap().forEach((k, v) -> {
                 if (StrUtil.equals(k.toString(), receiverId.toString())) {
@@ -116,38 +119,44 @@ public class SocketEndPointController {
         }
 
         try {
-            // 保存聊天记录
-            ChatRecord chatRecord = new ChatRecord();
-            chatRecord.setUserId(userId);
-            chatRecord.setReceiverId(receiverId);
-            chatRecord.setRecordContent((String) map.get("message"));
-            chatRecord.setRecordUpdateTime(new Date());
-            socketEndpoint.redisTemplate.opsForZSet().add(RedisConstant.CHAT_USER_LIST + userId, receiverId.toString(), new Date().getTime());
-            socketEndpoint.chatRecordService.save(chatRecord);
-            if (receiverId == -1) {
-                return;
-            }
-            // 保存聊天连接
-            ChatConnection chatConnection = new ChatConnection();
-            chatConnection.setUserId(userId);
-            chatConnection.setChatLastTime(new Date());
-            chatConnection.setChatUserId(receiverId);
-            socketEndpoint.chatConnectionService.query()
-                    .eq("user_id", userId).eq("chat_user_id", receiverId)
-                    .or()
-                    .eq("user_id", receiverId).eq("chat_user_id", userId)
-                    .orderByDesc("chat_last_time").last("limit 1")
-                    .oneOpt()
-                    .ifPresentOrElse(
-                            chatConnection1 -> {
-                                chatConnection.setChatLastTime(new Date());
-                                socketEndpoint.chatConnectionService.updateById(chatConnection);
-                            },
-                            () -> socketEndpoint.chatConnectionService.save(chatConnection)
-                    );
+            socketEndpoint.asyncExecutor.execute(() -> {
+                // 保存聊天记录
+                ChatRecord chatRecord = new ChatRecord();
+                chatRecord.setUserId(userId);
+                chatRecord.setReceiverId(receiverId);
+                chatRecord.setRecordContent((String) map.get("message"));
+                chatRecord.setRecordUpdateTime(new Date());
+                socketEndpoint.redisTemplate.opsForZSet().add(RedisConstant.CHAT_USER_LIST + userId, receiverId.toString(), new Date().getTime());
+                socketEndpoint.chatRecordService.save(chatRecord);
+            });
 
-        } catch (
-                Exception e) {
+
+            socketEndpoint.asyncExecutor.execute(() -> {
+                // 保存聊天连接
+                if (receiverId == -1) {
+                    return;
+                }
+                ChatConnection chatConnection = new ChatConnection();
+                chatConnection.setUserId(userId);
+                chatConnection.setChatLastTime(new Date());
+                chatConnection.setChatUserId(receiverId);
+                socketEndpoint.chatConnectionService.query()
+                        .eq("user_id", userId).eq("chat_user_id", receiverId)
+                        .or()
+                        .eq("user_id", receiverId).eq("chat_user_id", userId)
+                        .orderByDesc("chat_last_time").last("limit 1")
+                        .oneOpt()
+                        .ifPresentOrElse(
+                                chatConnection1 -> {
+                                    chatConnection.setChatLastTime(new Date());
+                                    socketEndpoint.chatConnectionService.updateById(chatConnection);
+                                },
+                                () -> socketEndpoint.chatConnectionService.save(chatConnection)
+                        );
+            });
+
+
+        } catch (Exception e) {
             log.error("保存聊天记录失败", e);
         }
 
@@ -155,7 +164,7 @@ public class SocketEndPointController {
     }
 
     @OnClose
-    public void onClose(@PathParam("userId") Long userId, Session session) {
+    public void onClose(@PathParam("userId") Long userId) {
 
         log.info("连接关闭->userId: {}", userId);
         SocketPool.remove(userId);
@@ -177,7 +186,7 @@ public class SocketEndPointController {
     @OnError
     public void onError(@PathParam("userId") Long userId, Throwable error) {
 
-        onClose(userId, SocketPool.getSessionMap().get(userId));
+        onClose(userId);
         log.error("webSocket发生错误->userId:{}", userId, error);
     }
 

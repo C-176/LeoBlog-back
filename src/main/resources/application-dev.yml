@@ -61,7 +61,7 @@ logging:
   level:
       com.chen.LeoBlog.dao: debug
       com.chen.LeoBlog: info
-  config: D:\\Javacode\\LeoBlog-back\\src\\main\\resources\\logback-config.xml
+  config: D:\Javacode\LeoBlog-back\src\main\resources\logback-config.xml
 
 
 

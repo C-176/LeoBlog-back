@@ -10,10 +10,11 @@
             <result property="receiverId" column="receiver_id" jdbcType="BIGINT"/>
             <result property="recordContent" column="record_content" jdbcType="VARCHAR"/>
             <result property="recordUpdateTime" column="record_update_time" jdbcType="TIMESTAMP"/>
+            <result property="isSaw" column="is_saw" jdbcType="TINYINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         record_id,user_id,receiver_id,
-        record_content,record_update_time
+        record_content,record_update_time,is_saw
     </sql>
 </mapper>

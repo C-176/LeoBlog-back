@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.chen.LeoBlog.constant.BaseConstant.*;
+
 /**
  * @author 1
  * @description 针对表【lb_user】的数据库操作Service实现
@@ -72,7 +74,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             if (user == null) {
                 return ResultInfo.fail("手机号尚未注册");
             }
-        }else{
+        } else {
             if (StrUtil.isNotBlank(username)) {
                 log.info("用户名登录[{}]", username);
                 user = query().eq("user_name", username).one();
@@ -84,14 +86,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                     return ResultInfo.fail("该邮箱尚未注册");
                 }
             }
-            if (!StrUtil.equals(user.getUserPassword(), password)){
-                log.info("密码[{}]错误",password);
+            if (!StrUtil.equals(user.getUserPassword(), password)) {
+                log.info("密码[{}]错误", password);
                 return ResultInfo.fail("密码错误");
             }
         }
         UserDto userDto = new UserDto();
-        BeanUtil.copyProperties(user,userDto);
-        login2redis(token,user);
+        BeanUtil.copyProperties(user, userDto);
+        login2redis(token, user);
         map = new HashMap<>();
         map.put("token", token);
         map.put("user", userDto);
@@ -113,8 +115,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         } else {
             s = redisTemplate.opsForValue().get(RedisConstant.USER_CAPTCHA + phone);
         }
-        if (s == null)  return ResultInfo.fail("验证码已过期");
-        if (!StrUtil.equals(s, captcha))  return ResultInfo.fail("验证码错误");
+        if (s == null) return ResultInfo.fail("验证码已过期");
+        if (!StrUtil.equals(s, captcha)) return ResultInfo.fail("验证码错误");
 
         ResultInfo resultInfo = registerConfirm(userName, phone, email);
         if (resultInfo != null) return resultInfo;
@@ -122,7 +124,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (StrUtil.isBlank(email)) {
             if (StrUtil.isBlank(phone)) return ResultInfo.fail("手机号、邮箱不能同时为空");
             log.info("手机号注册[{}]", phone);
-        }else{
+        } else {
             log.info("邮箱注册[{}]", email);
         }
 
@@ -131,7 +133,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserName(userName);
         user.setUserEmail(email);
         user.setUserPassword(password);
-        user.setUserNickname("blogger_"+ RandomUtil.randomString(6));
+        user.setUserNickname("blogger_" + RandomUtil.randomString(6));
         user.setUserRegisterDate(new Date());
         // 保存用户
         boolean isSuccess = save(user);
@@ -140,7 +142,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //map中存key：token
         map = new HashMap<>();
         map.put("token", token);
-        log.info("注册成功:token:{}",token);
+        log.info("注册成功:token:{}", token);
         return ResultInfo.success(map);
     }
 
@@ -151,8 +153,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         try {
             MailUtil.send("rtg1999@163.com", "手机验证码测试", "邮件来自LeoBlog\n" + captcha, false);
             log.info("手机验证码发送成功[{}]->[{}]", phone, captcha);
-        }catch (Exception e){
-            log.error("发送手机验证码失败:->{}",phone,e);
+        } catch (Exception e) {
+            log.error("发送手机验证码失败:->{}", phone, e);
         }
         return ResultInfo.success();
     }
@@ -162,33 +164,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String captcha = codeSender.send(email);
         //向邮箱发送验证码
         try {
-            MailUtil.send(email,"LeoBlog邮箱验证信息","验证码："+captcha,false);
-            log.info("邮箱验证码发送成功[{}]->[{}]",email,captcha);
-        }catch (Exception e){
-            log.error("发送邮件验证码失败:->{}",email,e);
+            MailUtil.send(email, "LeoBlog邮箱验证信息", htmlPrefix+"验证身份"+htmlMiddle + captcha + htmlSuffix, true);
+            log.info("邮箱验证码发送成功[{}]->[{}]", email, captcha);
+        } catch (Exception e) {
+            log.error("发送邮件验证码失败:->{}", email, e);
         }
         return ResultInfo.success();
     }
+
 
     @Override
     public ResultInfo getNameByIds(String id) {
         List<User> ids = query().in("user_id", id).list();
 
-        log.info("ids:{}",ids);
+        log.info("ids:{}", ids);
         List<User> users = query().in("user_id", ids).last("order by field(user_id," + ids + ")").list();
         //取出每个user的名字，转化为list
         List<Object> names = users.stream().map(User::getUserNickname).collect(Collectors.toList());
         return ResultInfo.success(names);
     }
 
-    private User getUserObj(Long userId){
+    private User getUserObj(Long userId) {
 //        log.info("userId:{}",userId);
         String key = RedisConstant.USER_INFO + userId;
         Object o = redisTemplate.opsForHash().get(key, "user");
         User user;
         //如果redis中没有，就从数据库中取
         if (o != null) {
-            user = JSONUtil.toBean(o.toString(),User.class);
+            user = JSONUtil.toBean(o.toString(), User.class);
 //            log.info("从redis中取出user:{}",user);
         } else {
 
@@ -206,7 +209,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         User user = getUserObj(userId);
         if (user == null) return ResultInfo.fail("用户不存在");
         UserDto userDto = new UserDto();
-        BeanUtil.copyProperties(user,userDto);
+        BeanUtil.copyProperties(user, userDto);
         return ResultInfo.success(userDto);
     }
 
@@ -222,26 +225,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String key = RedisConstant.USER_INFO + userId;
 
 //        从map中取出密码
-        String userPassword = (String) map.getOrDefault("userPassword",null);
+        String userPassword = (String) map.getOrDefault("userPassword", null);
         //取出邮箱
-        String userEmail = (String) map.getOrDefault("userEmail",null);
+        String userEmail = (String) map.getOrDefault("userEmail", null);
         //取出手机号
-        String userPhone = (String) map.getOrDefault("userPhone",null);
+        String userPhone = (String) map.getOrDefault("userPhone", null);
         //取出验证码
-        String captcha = (String) map.getOrDefault("captcha",null);
+        String captcha = (String) map.getOrDefault("captcha", null);
         //如果密码不为空，其他两者为空的话
-        if (StrUtil.isNotBlank(userPassword) && StrUtil.isBlank(userEmail) && StrUtil.isBlank(userPhone)){
+        if (StrUtil.isNotBlank(userPassword) && StrUtil.isBlank(userEmail) && StrUtil.isBlank(userPhone)) {
             //更新密码
             try {
                 update().set("user_password", userPassword).eq("user_id", userId).update();
                 redisTemplate.opsForHash().delete(key, "user");
-            }catch (Exception e){
-                log.error("更新密码失败:->{}",userId,e);
+            } catch (Exception e) {
+                log.error("更新密码失败:->{}", userId, e);
                 return ResultInfo.fail("更新密码失败");
             }
 
-        }else if (StrUtil.isNotBlank(userEmail) && StrUtil.isBlank(userPassword) && StrUtil.isBlank(userPhone)){
-            log.info("验证码：{},传入：{}",CodeSender.getCode(),captcha);
+        } else if (StrUtil.isNotBlank(userEmail) && StrUtil.isBlank(userPassword) && StrUtil.isBlank(userPhone)) {
+            log.info("验证码：{},传入：{}", CodeSender.getCode(), captcha);
             boolean isCorrect = CodeSender.confirmCode(captcha);
             if (!isCorrect) return ResultInfo.fail("验证码错误");
             //更新邮箱
@@ -251,12 +254,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 if (user_email.size() > 0) return ResultInfo.fail("邮箱已被注册");
                 update().set("user_email", userEmail).eq("user_id", userId).update();
                 redisTemplate.opsForHash().delete(key, "user");
-            }catch (Exception e){
-                log.error("更新邮箱失败:->{}",userId,e);
+            } catch (Exception e) {
+                log.error("更新邮箱失败:->{}", userId, e);
                 return ResultInfo.fail("更新邮箱失败");
             }
-        }else if (StrUtil.isNotBlank(userPhone) && StrUtil.isBlank(userPassword) && StrUtil.isBlank(userEmail)){
-            log.info("验证码：{},传入：{}",CodeSender.getCode(),captcha);
+        } else if (StrUtil.isNotBlank(userPhone) && StrUtil.isBlank(userPassword) && StrUtil.isBlank(userEmail)) {
+            log.info("验证码：{},传入：{}", CodeSender.getCode(), captcha);
             boolean isCorrect = CodeSender.confirmCode(captcha);
             if (!isCorrect) return ResultInfo.fail("验证码错误");
             //更新手机号
@@ -266,8 +269,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 if (user_phone.size() > 0) return ResultInfo.fail("手机号已被注册");
                 update().set("user_phone", userPhone).eq("user_id", userId).update();
                 redisTemplate.opsForHash().delete(key, "user");
-            }catch (Exception e){
-                log.error("更新手机号失败:->{}",userId,e);
+            } catch (Exception e) {
+                log.error("更新手机号失败:->{}", userId, e);
                 return ResultInfo.fail("更新手机号失败");
             }
         }
@@ -276,10 +279,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    public ResultInfo changePwd(Map<String, Object> map) {
+        String userPassword = (String) map.getOrDefault("userPassword", null);
+//        String userNewPassword = (String) map.getOrDefault("userNewPassword",null);
+        //取出验证码
+        String captcha = (String) map.getOrDefault("captcha", null);
+        if (StrUtil.isBlank(userPassword)) return ResultInfo.fail("密码不能为空");
+
+        String phone = (String) map.getOrDefault("userPhone", null);
+        String email = (String) map.getOrDefault("userEmail", null);
+        String s;
+        if (phone == null) {
+            s = redisTemplate.opsForValue().get(RedisConstant.USER_CAPTCHA + email);
+        } else {
+            s = redisTemplate.opsForValue().get(RedisConstant.USER_CAPTCHA + phone);
+        }
+        if (s == null) return ResultInfo.fail("验证码已过期");
+        if (!StrUtil.equals(s, captcha)) return ResultInfo.fail("验证码错误");
+        User user = query().eq("user_email", email).one();
+//        if (!user.getUserPassword().equals(userPassword)) return ResultInfo.fail("原密码错误");
+
+
+        try {
+            update().set("user_password", userPassword).eq("user_id", user.getUserId()).update();
+        } catch (Exception e) {
+            log.error("更新密码失败:->{}", user.getUserId(), e);
+            return ResultInfo.fail("更新密码失败");
+        }
+        return ResultInfo.success("更新成功");
+    }
+
+    @Override
     public ResultInfo deleteUser(Long userId) {
         //TODO:如果是管理员，可以删除用户，否则只能删除自己
 
-        log.info("删除用户:{}",userId);
+        log.info("删除用户:{}", userId);
         User user = query().eq("user_id", userId).one();
         if (user == null) return ResultInfo.fail("用户不存在");
         return null;
@@ -287,7 +321,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public ResultInfo updateUser(User user) {
-        
+
         boolean isSuccess = update().eq("user_id", user.getUserId()).update(user);
         if (isSuccess) {
             //用户信息更改，清除redis中的缓存
@@ -320,9 +354,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     private void login2redis(String token, User user) {
         UserDto userDto = new UserDto();
-        BeanUtil.copyProperties(user,userDto);
+        BeanUtil.copyProperties(user, userDto);
         Local.saveUser(userDto);
-        redisTemplate.opsForHash().put(RedisConstant.USER_LOGIN+token, "user", JSONUtil.toJsonStr(user));
+        redisTemplate.opsForHash().put(RedisConstant.USER_LOGIN + token, "user", JSONUtil.toJsonStr(user));
     }
 }
 

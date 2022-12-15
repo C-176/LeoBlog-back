@@ -13,9 +13,11 @@ import java.util.Map;
  */
 public interface MessageService extends IService<Message> {
 
-    ResultInfo getMsgByUserId(Long userId);
+    ResultInfo getMsgByUserId(Long userId, Integer page, Integer size);
 
     ResultInfo addMessage(Map<String, Object> map);
 
     ResultInfo deleteMessage(Long messageId);
+
+    ResultInfo readMessage(Long messageId);
 }

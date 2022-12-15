@@ -21,7 +21,7 @@ public class ChatConnectionController {
     private ChatRecordService chatRecordService;
 
     @RequestMapping("/connect/{userId}/{chatToId}")
-public ResultInfo connect(@PathVariable("userId") Long userId, @PathVariable("chatToId") Long chatToId) {
+    public ResultInfo connect(@PathVariable("userId") Long userId, @PathVariable("chatToId") Long chatToId) {
         return chatConnectionService.connect(userId, chatToId);
     }
 
@@ -29,7 +29,6 @@ public ResultInfo connect(@PathVariable("userId") Long userId, @PathVariable("ch
     public ResultInfo getChatConnectionList(@PathVariable Long userId) {
         return chatConnectionService.getChatConnectionList(userId);
     }
-
 
 
 }

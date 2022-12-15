@@ -1,12 +1,18 @@
 package com.chen.LeoBlog.service.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
+import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.mapper.ChatRecordMapper;
 import com.chen.LeoBlog.po.ChatRecord;
 import com.chen.LeoBlog.service.ChatRecordService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cglib.core.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,9 +22,11 @@ import java.util.List;
  * @createDate 2022-10-14 17:35:57
  */
 @Service
+@Slf4j
 public class ChatRecordServiceImpl extends ServiceImpl<ChatRecordMapper, ChatRecord>
         implements ChatRecordService {
-
+    @Resource
+    private ChatRecordMapper chatRecordMapper;
 
     @Override
     public List<ChatRecord> getChatRecordLastList(Long userId, List<Long> ids) {
@@ -52,7 +60,48 @@ public class ChatRecordServiceImpl extends ServiceImpl<ChatRecordMapper, ChatRec
         }
 
     }
+
+    @Override
+    public ResultInfo getRecordList(Long userId, Long talkToId, Integer page, Integer size) {
+        log.info("获取聊天记录列表,page:{},size:{}", page, size);
+        try {
+            Page<ChatRecord> pageObj = new Page<>(page, size);
+            if (talkToId == -1) {
+                chatRecordMapper.selectPage(pageObj, new QueryChainWrapper<>(chatRecordMapper).eq("receiver_Id", talkToId).orderByDesc("record_update_time").getWrapper());
+            } else {
+                chatRecordMapper.selectPage(pageObj,
+                        new QueryChainWrapper<>(chatRecordMapper)
+                                .eq("user_id", userId)
+                                .eq("receiver_id", talkToId)
+                                .or()
+                                .eq("user_id", talkToId)
+                                .eq("receiver_id", userId)
+                                .orderByDesc("record_update_time")
+                                .getWrapper());
+//            if (talkToId == 1) {
+//                if (pageObj.getRecords().size() == 0) {
+//                    ChatRecord chatRecord = new ChatRecord();
+//                    chatRecord.setUserId(talkToId);
+//                    chatRecord.setReceiverId(userId);
+//                    chatRecord.setRecordContent("你好，我是LeoBlog的机器人，有什么问题可以问我哦");
+//                    chatRecord.setRecordUpdateTime(new Date());
+//                    save(chatRecord);
+//                    list.add(chatRecord);
+//                }
+//            }
+            }
+
+            // 将pageObj.records逆序
+            pageObj.setRecords(CollectionUtil.reverse(pageObj.getRecords()));
+            return ResultInfo.success(pageObj);
+        } catch (Exception e) {
+            log.error("获取聊天记录失败", e);
+            return ResultInfo.fail("获取失败，请重试");
+        }
+    }
+
 }
+
 
 
 

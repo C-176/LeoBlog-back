@@ -19,7 +19,7 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
     <!--<springProperty name="log.path" source="LOG_PATH" />-->
     <!--<springProperty name="log.level" source="LOG_LEVEL" />-->
     <!--<springProperty name="log.name" source="LOG_NAME" />-->
-    <property name="log.level" value="debug"/>
+    <property name="log.level" value="info"/>
     <property name="log.name" value="lb"/>
     <property name="log.path" value="log/${log.name}"/>
 

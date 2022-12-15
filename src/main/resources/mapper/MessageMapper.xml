@@ -5,18 +5,20 @@
 <mapper namespace="com.chen.LeoBlog.mapper.MessageMapper">
 
     <resultMap id="BaseResultMap" type="com.chen.LeoBlog.po.Message">
-        <id property="messageId" column="message_id" jdbcType="BIGINT"/>
-        <result property="userId" column="user_id" jdbcType="BIGINT"/>
-        <result property="receiverId" column="receiver_id" jdbcType="BIGINT"/>
-        <result property="messageTitle" column="message_title" jdbcType="VARCHAR"/>
-        <result property="messageContent" column="message_content" jdbcType="VARCHAR"/>
-        <result property="messageUpdateTime" column="message_update_time" jdbcType="TIMESTAMP"/>
-        <result property="messageType" column="message_type" jdbcType="INTEGER"/>
+            <id property="messageId" column="message_id" jdbcType="BIGINT"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
+            <result property="receiverId" column="receiver_id" jdbcType="BIGINT"/>
+            <result property="messageTitle" column="message_title" jdbcType="VARCHAR"/>
+            <result property="messageContent" column="message_content" jdbcType="VARCHAR"/>
+            <result property="messageUpdateTime" column="message_update_time" jdbcType="TIMESTAMP"/>
+            <result property="isSaw" column="is_saw" jdbcType="TINYINT"/>
+            <result property="messageType" column="message_type" jdbcType="INTEGER"/>
+            <result property="messageRedirect" column="message-redirect" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         message_id,user_id,receiver_id,
         message_title,message_content,message_update_time,
-        message_type
+        is_saw,message_type,message-redirect
     </sql>
 </mapper>

@@ -17,4 +17,6 @@ public interface ChatRecordService extends IService<ChatRecord> {
     List<ChatRecord> getChatRecordLastList(Long userId, List<Long> ids);
 
     ResultInfo deleteRecord(Long recordId);
+
+    ResultInfo getRecordList(Long userId, Long chatToId, Integer page, Integer size);
 }

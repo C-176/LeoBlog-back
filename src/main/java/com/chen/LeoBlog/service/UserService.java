@@ -33,4 +33,6 @@ public interface UserService extends IService<User> {
     ResultInfo getSecurityUser(Long userId);
 
     ResultInfo updateSecurityUser(Map<String, Object> map, Long userId);
+
+    ResultInfo changePwd(Map<String, Object> map);
 }
