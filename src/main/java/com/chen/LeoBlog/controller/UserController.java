@@ -8,6 +8,7 @@ import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Scope;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -53,16 +54,15 @@ public class UserController {
     }
 
     @RequestMapping("/getCaptcha")
+
     public void getCaptcha(HttpServletResponse response) {
         lineCaptcha = CaptchaUtil.createLineCaptcha(116, 36, 4, 20);
 
         StrUtil.format("Captcha: {}", lineCaptcha.getCode());
         response.setContentType("image/jpeg");
         response.setHeader("Pragma", "No-cache");
-        try {
-            ServletOutputStream outputStream = response.getOutputStream();
+        try (ServletOutputStream outputStream = response.getOutputStream();){
             lineCaptcha.write(outputStream);
-            outputStream.close();
         } catch (IOException e) {
             log.error("图片验证码加载失败", e);
         }

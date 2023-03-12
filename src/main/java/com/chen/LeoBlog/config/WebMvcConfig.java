@@ -39,7 +39,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new RefreshTTLInterceptor(redisTemplate)).addPathPatterns("/**");
-        registry.addInterceptor(new NoLoginInterceptor(redisTemplate)).addPathPatterns("/xx/**")
+        registry.addInterceptor(new NoLoginInterceptor(redisTemplate)).addPathPatterns("/**")
                 .excludePathPatterns("/user/**","/source/**");
     }
 

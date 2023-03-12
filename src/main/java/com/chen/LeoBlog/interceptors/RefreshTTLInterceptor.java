@@ -20,32 +20,33 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class RefreshTTLInterceptor implements HandlerInterceptor {
 
-    private final StringRedisTemplate  redisTemplate;
+    private final StringRedisTemplate redisTemplate;
+
     public RefreshTTLInterceptor(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
     @Override
-    public boolean preHandle(javax.servlet.http.HttpServletRequest request, javax.servlet.http.HttpServletResponse response, Object handler){
+    public synchronized boolean preHandle(javax.servlet.http.HttpServletRequest request, javax.servlet.http.HttpServletResponse response, Object handler) {
         //从请求头中拿到token
         String token = request.getHeader("Authorization");
         //如果没有传递token，直接放行
-        if(token == null || StrUtil.isBlank(token)) return true;
+        if (token == null || StrUtil.isBlank(token)) return true;
         //根据token查询redis中对应的信息
-        String value="";
+        String value = "";
         Object user;
         String key = RedisConstant.USER_LOGIN + token;
-        try{
+        try {
             user = redisTemplate.opsForHash().get(key, "user");
-            if(user != null){
+            if (user != null) {
                 value = user.toString();
-            }else{
+            } else {
                 return true;
             }
-        }catch (Exception e){
-            log.error("redis查询异常:[{}]",key,e);
+        } catch (Exception e) {
+            log.error("redis查询异常:[{}]", key, e);
         }
-        if(StrUtil.isBlank(value)) return true;
+        if (StrUtil.isBlank(value)) return true;
 
         //刷新token的过期时间：2DAY
         redisTemplate.expire(key, RedisConstant.USER_LOGIN_TTL, TimeUnit.DAYS);
@@ -53,10 +54,13 @@ public class RefreshTTLInterceptor implements HandlerInterceptor {
 
         UserDto userDto = new UserDto();
         BeanUtil.copyProperties(user, userDto);
-        Local.saveUser(userDto);
-        if(Local.getUser() == null) {
-            log.error("设置Local失败");
+        if (Local.getUser() == null) {
+            Local.saveUser(userDto);
+            if (Local.getUser() == null) {
+                log.error("设置Local失败");
+            }
         }
+
         return true;
     }
 

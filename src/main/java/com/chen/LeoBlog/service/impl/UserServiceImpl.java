@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -41,11 +42,11 @@ import static com.chen.LeoBlog.constant.BaseConstant.*;
 
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         implements UserService {
-    @Autowired
+    @Resource
     private CodeSender codeSender;
     @Autowired
     private StringRedisTemplate redisTemplate;
-    @Autowired
+    @Resource
     private IdUtil idUtil;
 
     @Override
@@ -117,7 +118,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         }
         if (s == null) return ResultInfo.fail("验证码已过期");
         if (!StrUtil.equals(s, captcha)) return ResultInfo.fail("验证码错误");
-
+        // 判断用户名邮箱电话是否已经存在
         ResultInfo resultInfo = registerConfirm(userName, phone, email);
         if (resultInfo != null) return resultInfo;
 
@@ -133,7 +134,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserName(userName);
         user.setUserEmail(email);
         user.setUserPassword(password);
-        user.setUserNickname("blogger_" + RandomUtil.randomString(6));
+        user.setUserNickname("lber_" + RandomUtil.randomString(4));
         user.setUserRegisterDate(new Date());
         // 保存用户
         boolean isSuccess = save(user);
@@ -164,7 +165,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String captcha = codeSender.send(email);
         //向邮箱发送验证码
         try {
-            MailUtil.send(email, "LeoBlog邮箱验证信息", htmlPrefix+"验证身份"+htmlMiddle + captcha + htmlSuffix, true);
+            MailUtil.send(email, "LeoBlog邮箱验证信息", htmlPrefix + "验证身份" + htmlMiddle + captcha + htmlSuffix, true);
             log.info("邮箱验证码发送成功[{}]->[{}]", email, captcha);
         } catch (Exception e) {
             log.error("发送邮件验证码失败:->{}", email, e);
@@ -189,23 +190,24 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String key = RedisConstant.USER_INFO + userId;
         Object o = redisTemplate.opsForHash().get(key, "user");
         User user;
-        //如果redis中没有，就从数据库中取
-        if (o != null) {
-            user = JSONUtil.toBean(o.toString(), User.class);
+        synchronized (this) {
+            //如果redis中没有，就从数据库中取
+            if (o != null) {
+                user = JSONUtil.toBean(o.toString(), User.class);
 //            log.info("从redis中取出user:{}",user);
-        } else {
-
-            user = query().eq("user_id", userId).one();
-            if (user == null) return null;
-            redisTemplate.opsForHash().put(key, "user", JSONUtil.toJsonStr(user));
-            redisTemplate.expire(key, RedisConstant.USER_INFO_TTL, TimeUnit.DAYS);
+            } else {
+                user = query().eq("user_id", userId).one();
+                if (user == null) return null;
+                redisTemplate.opsForHash().put(key, "user", JSONUtil.toJsonStr(user));
+                redisTemplate.expire(key, RedisConstant.USER_INFO_TTL, TimeUnit.DAYS);
+            }
         }
         return user;
     }
 
 
     @Override
-    public ResultInfo getUser(Long userId) {
+    public ResultInfo getSecurityUser(Long userId) {
         User user = getUserObj(userId);
         if (user == null) return ResultInfo.fail("用户不存在");
         UserDto userDto = new UserDto();
@@ -214,7 +216,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public ResultInfo getSecurityUser(Long userId) {
+    public ResultInfo getUser(Long userId) {
         User user = getUserObj(userId);
         if (user == null) return ResultInfo.fail("用户不存在");
         return ResultInfo.success(user);
@@ -316,7 +318,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         log.info("删除用户:{}", userId);
         User user = query().eq("user_id", userId).one();
         if (user == null) return ResultInfo.fail("用户不存在");
-        return null;
+//        return ResultInfo.success("删除成功");
+        return ResultInfo.fail("删除失败");
     }
 
     @Override
@@ -335,12 +338,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private ResultInfo registerConfirm(String userName, String phone, String userEmail) {
         User user;
         if (StrUtil.isNotBlank(userEmail)) {
+            // 从数据库中查询是否存在该邮箱，不分大小写
             user = query().eq("user_email", userEmail).one();
-            if (user != null) return ResultInfo.fail("该邮箱已注册,可直接登陆");
+            if (user != null) return ResultInfo.fail("该邮箱已被注册");
         }
         if (StrUtil.isNotBlank(phone)) {
             user = query().eq("user_phone", phone).one();
-            if (user != null) return ResultInfo.fail("该手机号已注册，可直接登陆");
+            if (user != null) return ResultInfo.fail("该手机号已被注册");
         }
         user = query().eq("user_name", userName).one();
         if (user != null) return ResultInfo.fail("该用户名已被注册");
@@ -349,7 +353,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     private String getToken() {
-        return UUID.randomUUID(true).toString();
+        //生成token
+        return UUID.randomUUID(true).toString(true);
     }
 
     private void login2redis(String token, User user) {

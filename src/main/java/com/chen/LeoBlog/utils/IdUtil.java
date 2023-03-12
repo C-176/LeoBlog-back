@@ -1,5 +1,6 @@
 package com.chen.LeoBlog.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import java.time.ZoneOffset;
 import static com.chen.LeoBlog.constant.RedisConstant.ICR_ID;
 
 @Component
+@Slf4j
 public class IdUtil {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -22,7 +24,7 @@ public class IdUtil {
         long timestamp = nowSecond - BEGIN_TIMESTAMP;
 
         long aLong = stringRedisTemplate.opsForValue().increment( ICR_ID+key, 1);
-        System.out.println("自增id"+aLong);
+        log.info("自增id"+aLong);
         return timestamp<<10|aLong;
 
     }

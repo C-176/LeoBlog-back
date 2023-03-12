@@ -1,7 +1,9 @@
 package com.chen.LeoBlog.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.ResultInfo;
+import com.chen.LeoBlog.dto.UserDto;
 import com.chen.LeoBlog.mapper.ChatConnectionMapper;
 import com.chen.LeoBlog.po.ChatConnection;
 import com.chen.LeoBlog.po.ChatRecord;
@@ -93,7 +95,9 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
         //将users和records合并
         for (int i = 0; i < users.size(); i++) {
             HashMap<String, Object> hashMap = new HashMap<>();
-            hashMap.put("user", users.get(i));
+            UserDto userDto = new UserDto();
+            BeanUtil.copyProperties(users.get(i), userDto);
+            hashMap.put("user", userDto);
             hashMap.put("record", records.get(i));
             chats.add(hashMap);
         }

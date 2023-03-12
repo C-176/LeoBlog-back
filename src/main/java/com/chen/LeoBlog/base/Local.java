@@ -14,27 +14,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpSession;
 
 
-@Scope(value= WebApplicationContext.SCOPE_SESSION)
-
+@Scope("session")
 public class Local extends HttpServlet {
-
-//    private static final HttpSession session = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest().getSession();
-//
-//    //获取用户信息
-//    public static UserDto getUser(){
-//        return (UserDto) session.getAttribute("user");
-//    }
-//
-//    public static void saveUser(UserDto userDto) {
-//        session.setAttribute("user",userDto);
-//    }
-//
-//    public static void removeUser() {
-//        session.removeAttribute("user");
-//    }
-
-
-
     private static final ThreadLocal<UserDto> tl = new ThreadLocal<>();
 
     public static void saveUser(UserDto userDto) {

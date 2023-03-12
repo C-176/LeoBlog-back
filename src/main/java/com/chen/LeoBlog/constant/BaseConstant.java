@@ -5,11 +5,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class BaseConstant {
-    @Value("${server.port}")
-    private static int port;
 
-    public static final String PATH_PREFIX = "http://localhost:"+port+"/";
-
+    // 验证码html
     public static final String htmlPrefix = "<!DOCTYPE html>\n" +
             "<html lang=\"zh\">\n" +
             "<head>\n" +

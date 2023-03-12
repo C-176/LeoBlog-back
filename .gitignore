@@ -1,6 +1,6 @@
 # 项目排除路径
 /node_modules/
 /target/
-.fleet
-.idea
-log
+/.fleet/
+/.idea/
+/log/

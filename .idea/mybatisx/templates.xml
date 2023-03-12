@@ -21,6 +21,7 @@
               <list>
                 <ModuleInfoGo>
                   <option name="basePath" value="${domain.basePath}" />
+                  <option name="configFileName" value="mapperInterface.ftl" />
                   <option name="configName" value="mapperInterface" />
                   <option name="encoding" value="${domain.encoding}" />
                   <option name="fileName" value="${domain.fileName}Mapper" />
@@ -30,6 +31,7 @@
                 </ModuleInfoGo>
                 <ModuleInfoGo>
                   <option name="basePath" value="src/main/resources" />
+                  <option name="configFileName" value="mapperXml.ftl" />
                   <option name="configName" value="mapperXml" />
                   <option name="encoding" value="${domain.encoding}" />
                   <option name="fileName" value="${domain.fileName}Mapper" />
@@ -39,6 +41,7 @@
                 </ModuleInfoGo>
                 <ModuleInfoGo>
                   <option name="basePath" value="${domain.basePath}" />
+                  <option name="configFileName" value="serviceImpl.ftl" />
                   <option name="configName" value="serviceImpl" />
                   <option name="encoding" value="${domain.encoding}" />
                   <option name="fileName" value="${domain.fileName}ServiceImpl" />
@@ -48,6 +51,7 @@
                 </ModuleInfoGo>
                 <ModuleInfoGo>
                   <option name="basePath" value="${domain.basePath}" />
+                  <option name="configFileName" value="serviceInterface.ftl" />
                   <option name="configName" value="serviceInterface" />
                   <option name="encoding" value="${domain.encoding}" />
                   <option name="fileName" value="${domain.fileName}Service" />
@@ -58,6 +62,7 @@
               </list>
             </option>
             <option name="needsComment" value="true" />
+            <option name="needsModel" value="true" />
             <option name="relativePackage" value="po" />
             <option name="superClass" value="" />
             <option name="tableUIInfoList">
