@@ -1,7 +1,13 @@
 package com.chen.LeoBlog.config;
 
 
+import cn.hutool.captcha.CaptchaUtil;
+import cn.hutool.captcha.LineCaptcha;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import io.lettuce.core.RedisClient;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,6 +17,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter
 
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
+import java.io.ObjectInputFilter;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -59,7 +66,21 @@ public class MvcConfig extends WebMvcConfigurerAdapter {
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return executor;
     }
+    @Bean
+    public LineCaptcha lineCaptcha() {
+        return CaptchaUtil.createLineCaptcha(116, 36, 4, 20);
+    }
 
+    @Bean
+    public RedissonClient redissonClient(){
+        // 1. Create config object
+        Config config = new Config();
+        config.useSingleServer()
+                // use "redis://" for SSL connection
+                .setAddress("redis://"+environment.getProperty("spring.redis.host")+":"+environment.getProperty("spring.redis.port"))
+                .setPassword(environment.getProperty("spring.redis.password"));
+        return Redisson.create(config);
+    }
 
 
 

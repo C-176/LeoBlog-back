@@ -11,6 +11,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
+@CrossOrigin
 @RequestMapping("/message")
 public class MessageController {
     @Autowired

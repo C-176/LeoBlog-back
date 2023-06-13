@@ -11,10 +11,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.Serializable;
+import java.util.*;
+
+import static com.chen.LeoBlog.constant.BaseConstant.UPLOAD_IMG_PATH;
+import static com.chen.LeoBlog.constant.BaseConstant.UPLOAD_VIDEO_PATH;
 
 
 @Service
@@ -35,17 +36,12 @@ public class UploadService {
         String fileType = file.getContentType();
         String[] videoType = {"video/mp4", "video/avi", "video/mpeg4", "video/mpeg"};
         String[] imgType = {"image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp"};
-        List<String> videoList = Arrays.asList(videoType);
-        List<String> imgList = Arrays.asList(imgType);
+        Set<String> videoSet = Set.of(videoType);
+        Set<String> imgSet = Set.of(imgType);
         //判断文件类型是否正确
-        AssertUtil.isTrue(!(videoList.contains(fileType) || imgList.contains(fileType)), "上传文件类型不正确，请上传视频（.mp4/.avi/.mpeg4/.mpeg）或图片");
-        boolean isImage = imgList.contains(fileType);
-        if (isImage) {
-            path = path + "source/upload/images/";
-        } else {
-//            将文件转化为mp4格式
-            path = path + "source/upload/videos/";
-        }
+        AssertUtil.isTrue(!videoSet.contains(fileType) && !imgSet.contains(fileType), "上传文件类型不正确，请上传视频（.mp4/.avi/.mpeg4/.mpeg）或图片");
+
+        path = path + (imgSet.contains(fileType) ? UPLOAD_IMG_PATH :UPLOAD_VIDEO_PATH);
 
         String filename = file.getOriginalFilename();
         // 获取文件扩展名
@@ -69,13 +65,13 @@ public class UploadService {
             AssertUtil.isTrue(true, "文章中图片上传失败");
             return null;
         }
-        return !isImage ? "/source/upload/videos/" + uploadFilename : "/source/upload/images/" + uploadFilename;
+        return (imgSet.contains(fileType) ? UPLOAD_IMG_PATH :UPLOAD_VIDEO_PATH) + uploadFilename;
     }
 
     /**
      * 文章中的图片上传
      */
-    public Map uploadEditorFile(MultipartFile file) {
+    public Map<String, Object> uploadEditorFile(MultipartFile file) {
 //        String[] videoType = {"video/mp4", "video/avi", "video/mpeg4", "video/mpeg"};
 //        List<String> videoList = Arrays.asList(videoType);
 //        boolean isVideo = videoList.contains(file.getContentType());
@@ -84,23 +80,12 @@ public class UploadService {
         try {
             imageUrl = uploadFile(file, staticPath);
             log.debug("文件所在地：{}", imageUrl);
-        } catch (
-                Exception e) {
+        } catch (Exception e) {
             log.error("文件上传失败", e);
-            Map<String, Object> map = new HashMap<>();
-            map.put("errno", 1);
-            map.put("message", e.getMessage());
-            return map;
+            return Map.of("errno",1,"message",e.getMessage());
         }
         //获取请求地址
-
-
-        Map<String, Object> map = new HashMap<>();
-        map.put("errno", 0);
-        Map<String, Object> data = new HashMap<>();
-        data.put("url", "http://" + ip + imageUrl);
-        map.put("data", data);
-        return map;
+        return Map.of("errno", 0, "url", "http://" + ip + imageUrl);
 
     }
 

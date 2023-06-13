@@ -15,9 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.*;
 
-import static com.chen.LeoBlog.constant.RedisConstant.CHAT_USER_LIST;
+import static com.chen.LeoBlog.constant.RedisConstant.CHAT_FRIEND_LIST;
 
 /**
  * @author 1
@@ -37,7 +38,7 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
 
     @Override
     public ResultInfo getChatConnectionList(Long userId) {
-        String key = CHAT_USER_LIST + userId;
+        String key = CHAT_FRIEND_LIST + userId;
         Set<String> members = redisTemplate.opsForZSet().reverseRange(key, 0, -1);
         List<ChatConnection> list;
         List<Long> ids = new ArrayList<>();
@@ -125,7 +126,7 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
                 chatConnection.setChatLastTime(new Date());
                 updateById(chatConnection);
             }
-            redisTemplate.opsForZSet().add(CHAT_USER_LIST + userId, talkToId.toString(), new Date().getTime());
+            redisTemplate.opsForZSet().add(CHAT_FRIEND_LIST + userId, talkToId.toString(), new Date().getTime());
         }
         return chatRecordService.getRecordList(userId, talkToId, 1, 50);
     }

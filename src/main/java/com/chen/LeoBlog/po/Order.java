@@ -4,28 +4,40 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-
-import java.io.Serial;
 import java.io.Serializable;
+import java.util.Date;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 /**
  * 
- * @TableName lb_set_article_label
+ * @TableName lb_order
  */
-@TableName(value ="lb_set_article_label")
+@TableName(value ="lb_order")
 @Data
-public class SetArticleLabel implements Serializable {
+@AllArgsConstructor
+public class Order implements Serializable {
     /**
-     * 文章id
+     * 订单id
      */
-
-    private Long articleId;
+    @TableId
+    private Long orderId;
 
     /**
-     * 对应的标签id
+     * 用户id
      */
-    private Long labelId;
+    private Long userId;
+
+    /**
+     * 徽章id
+     */
+    private Long badageId;
+
+    /**
+     * 订单生成时间
+     */
+    private Date orderCreateTime;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

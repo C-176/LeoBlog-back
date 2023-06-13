@@ -3,8 +3,13 @@ package com.chen.LeoBlog.constant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-@Component
+
 public class BaseConstant {
+
+    // 文件上传路径
+    public static final String UPLOAD_IMG_PATH = "source/upload/images/";
+    public static final String UPLOAD_VIDEO_PATH = "source/upload/videos/";
+
 
     // 验证码html
     public static final String htmlPrefix = "<!DOCTYPE html>\n" +

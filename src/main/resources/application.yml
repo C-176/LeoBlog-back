@@ -5,3 +5,13 @@ spring:
 server:
   ssl:
     enabled: false
+
+mybatis-plus:
+  global-config:
+    enable-sql-runner: true
+
+
+yuapi:
+  client:
+    access-key: 6pvaa8742g7bcdsh86k7hv9ci2yrhdci
+    secret-key: oykm15xymum35dh19ehooc2bvjxuy4zh

@@ -4,28 +4,30 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-
-import java.io.Serial;
 import java.io.Serializable;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * 
- * @TableName lb_set_article_label
+ * 用户徽章对应表
+ * @TableName lb_set_user_badge
  */
-@TableName(value ="lb_set_article_label")
+@TableName(value ="lb_set_user_badge")
 @Data
-public class SetArticleLabel implements Serializable {
+@NoArgsConstructor
+@AllArgsConstructor
+public class SetUserBadge implements Serializable {
     /**
-     * 文章id
+     * 
      */
-
-    private Long articleId;
+    private Long userId;
 
     /**
-     * 对应的标签id
+     * 
      */
-    private Long labelId;
+    private Long badgeId;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

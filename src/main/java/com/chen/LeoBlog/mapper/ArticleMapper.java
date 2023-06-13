@@ -2,6 +2,7 @@ package com.chen.LeoBlog.mapper;
 
 import com.chen.LeoBlog.po.Article;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Select;
 
 /**
 * @author 1

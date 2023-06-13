@@ -14,7 +14,7 @@ import java.util.Map;
 */
 public interface UserService extends IService<User> {
 
-    ResultInfo login(Map<String, Object> map, String token, LineCaptcha lineCaptcha);
+    ResultInfo login(Map<String, Object> map, String token);
 
     ResultInfo register(Map<String, Object> map);
 

@@ -6,7 +6,10 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 
@@ -14,6 +17,8 @@ import lombok.Data;
  */
 @TableName(value ="lb_article")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Article implements Serializable {
     /**
      * 文章id
@@ -73,4 +78,13 @@ public class Article implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    public Article(Integer isArticle, Long userId, String articleTitle, String articleContent, Date articleUpdateDate) {
+        this.isArticle = isArticle;
+        this.userId = userId;
+        this.articleTitle = articleTitle;
+        this.articleContent = articleContent;
+        this.articleUpdateDate = articleUpdateDate;
+    }
+
 }

@@ -6,7 +6,10 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 
@@ -14,6 +17,8 @@ import lombok.Data;
  */
 @TableName(value ="lb_chat_record")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ChatRecord implements Serializable {
     /**
      * 
@@ -48,4 +53,14 @@ public class ChatRecord implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    public ChatRecord(Long userId, Long receiverId, String recordContent, Date recordUpdateTime) {
+    	this.userId = userId;
+    	this.receiverId = receiverId;
+    	this.recordContent = recordContent;
+    	this.recordUpdateTime = recordUpdateTime;
+    	this.isSaw = 0;
+    }
+
+
 }

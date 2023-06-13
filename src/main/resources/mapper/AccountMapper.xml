@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.LeoBlog.mapper.AccountMapper">
+
+    <resultMap id="BaseResultMap" type="com.chen.LeoBlog.po.Account">
+            <id property="userId" column="user_id" jdbcType="BIGINT"/>
+            <result property="userMoney" column="user_money" jdbcType="BIGINT"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        user_id,user_money,update_time
+    </sql>
+</mapper>

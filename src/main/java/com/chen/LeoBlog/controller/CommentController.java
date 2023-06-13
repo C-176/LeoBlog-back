@@ -10,6 +10,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
+@CrossOrigin
 @RequestMapping("/comment")
 public class CommentController {
     @Resource

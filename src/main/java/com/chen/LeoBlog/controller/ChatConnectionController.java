@@ -5,12 +5,10 @@ import com.chen.LeoBlog.service.ChatConnectionService;
 import com.chen.LeoBlog.service.ChatRecordService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@CrossOrigin
 @RequestMapping("/chat")
 @Slf4j
 
@@ -20,7 +18,7 @@ public class ChatConnectionController {
     @Autowired
     private ChatRecordService chatRecordService;
 
-    @RequestMapping("/connect/{userId}/{chatToId}")
+    @GetMapping("/connect/{userId}/{chatToId}")
     public ResultInfo connect(@PathVariable("userId") Long userId, @PathVariable("chatToId") Long chatToId) {
         return chatConnectionService.connect(userId, chatToId);
     }

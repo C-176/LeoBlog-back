@@ -5,6 +5,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 
 @SpringBootApplication
@@ -17,7 +19,10 @@ public class Starter extends SpringBootServletInitializer {
 
         springApplication.setBannerMode(Banner.Mode.OFF); // banner图标关闭
 
-        springApplication.run();
+        ConfigurableApplicationContext run = springApplication.run();
+//        for (String beanDefinitionName : run.getBeanDefinitionNames()) {
+//            System.out.println(beanDefinitionName);
+//        }
     }
 
     @Override

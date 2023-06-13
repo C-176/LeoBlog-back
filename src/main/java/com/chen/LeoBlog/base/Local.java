@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpSession;
 
 
-@Scope("session")
+
 public class Local extends HttpServlet {
     private static final ThreadLocal<UserDto> tl = new ThreadLocal<>();
 

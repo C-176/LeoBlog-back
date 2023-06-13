@@ -18,8 +18,8 @@ public class CodeSender {
 
     private static String code;
 
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     /**
      * 生成六位验证码，存入redis，返回验证码
@@ -29,7 +29,7 @@ public class CodeSender {
     public String send(String type) {
         // 生成6位验证码
         code = RandomUtil.randomString(6);
-        stringRedisTemplate.opsForValue().set(RedisConstant.USER_CAPTCHA + type,code, RedisConstant.USER_CAPTCHA_TTL, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(RedisConstant.USER_CAPTCHA + type,code, RedisConstant.USER_CAPTCHA_TTL, TimeUnit.MINUTES);
         return code;
     }
     public static String getCode() {

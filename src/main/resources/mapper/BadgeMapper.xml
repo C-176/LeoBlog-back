@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chen.LeoBlog.mapper.BadgeMapper">
+
+    <resultMap id="BaseResultMap" type="com.chen.LeoBlog.po.Badge">
+            <id property="badgeId" column="badge_id" jdbcType="BIGINT"/>
+            <result property="badgeName" column="badge_name" jdbcType="VARCHAR"/>
+            <result property="badgeDescription" column="badge_description" jdbcType="VARCHAR"/>
+            <result property="badgeStock" column="badge_stock" jdbcType="INTEGER"/>
+            <result property="badgeType" column="badge_type" jdbcType="INTEGER"/>
+            <result property="badgeValue" column="badge_value" jdbcType="INTEGER"/>
+            <result property="badgeIcon" column="badge_icon" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        badge_id,badge_name,badge_description,
+        badge_stock,badge_type,badge_value,
+        badge_icon
+    </sql>
+</mapper>

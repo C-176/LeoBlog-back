@@ -40,18 +40,20 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new RefreshTTLInterceptor(redisTemplate)).addPathPatterns("/**");
         registry.addInterceptor(new NoLoginInterceptor(redisTemplate)).addPathPatterns("/**")
-                .excludePathPatterns("/user/**","/source/**");
+                .excludePathPatterns("/user/**", "/source/**");
     }
 
-//    CORS
+//    CORS跨域配置
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")   // 允许跨域访问的路径
                 .allowedOriginPatterns("*")  // 允许跨域访问的源
                 .allowedMethods("*")  // 允许请求方法
                 .maxAge(666000)  // 预检间隔时间
-                .allowedHeaders("*")  // 允许头部设置
-                .allowCredentials(true); // 是否允许发送cookie
+                .allowedHeaders("*");  // 允许头部设置
+
+
+//                .allowCredentials(true); // 是否允许发送cookie
         log.info("CORS配置成功");
     }
 }

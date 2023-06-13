@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.Session;
 import java.io.IOException;
+import java.util.Objects;
 
 
 @Service
@@ -22,8 +23,6 @@ public class SocketService {
      */
     public void sendMessage(Session session, String msg) {
         synchronized (session) {
-            if (session == null)
-                return;
             final RemoteEndpoint.Basic basic = session.getBasicRemote();
             if (basic == null)
                 return;
@@ -39,7 +38,7 @@ public class SocketService {
         log.info("广播：群发消息");
         // 遍历map
         SocketPool.getSessionMap().forEach((keyId, session) -> {
-            if (userId != keyId) {
+            if (!userId.equals(keyId)) {
                 sendMessage(session, message);
             }
         });

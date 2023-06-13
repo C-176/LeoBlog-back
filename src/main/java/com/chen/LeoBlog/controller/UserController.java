@@ -8,6 +8,7 @@ import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,12 +25,12 @@ import java.util.Map;
 public class UserController {
     @Resource
     private UserService userService;
-
+    @Resource
     private LineCaptcha lineCaptcha;
 
     @PostMapping("/login")
     public ResultInfo login(@RequestBody Map<String, Object> map, @RequestHeader(value = "Authorization", defaultValue = "", required = false) String token) {
-        return userService.login(map, token, lineCaptcha);
+        return userService.login(map, token);
     }
 
     @PostMapping("/register")
@@ -56,8 +57,6 @@ public class UserController {
     @RequestMapping("/getCaptcha")
 
     public void getCaptcha(HttpServletResponse response) {
-        lineCaptcha = CaptchaUtil.createLineCaptcha(116, 36, 4, 20);
-
         StrUtil.format("Captcha: {}", lineCaptcha.getCode());
         response.setContentType("image/jpeg");
         response.setHeader("Pragma", "No-cache");

@@ -13,40 +13,47 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResultInfo {
+public class ResultInfo<T> {
     private Integer code = 200;
     private String msg = "success";
-    private Object data;
+    private T data;
 
 
-    public static ResultInfo success(){
-        return new ResultInfo(200, "success", null);
+    public static ResultInfo<String> success() {
+        return new ResultInfo<>(200, "success", null);
     }
-    public static ResultInfo success(Object data){
-        return new ResultInfo(200, "success", data);
+
+    public static <T> ResultInfo<T> success(T data) {
+        return new ResultInfo<>(200, "success", data);
     }
-    public static ResultInfo success(String data){
-        return new ResultInfo(200, "success", data);
+
+    public static ResultInfo<String> success(String data) {
+        return new ResultInfo<>(200, "success", data);
     }
-    public static ResultInfo success(Page<?> page){
-        Map<String,Object> map = new HashMap<>();
+
+    public static ResultInfo<Map<String,Object>> success(Page<?> page) {
+        Map<String, Object> map = new HashMap<>();
         map.put("total", page.getTotal());
         map.put("pages", page.getPages());
         map.put("size", page.getSize());
         map.put("current", page.getCurrent());
         map.put("records", page.getRecords());
-        return new ResultInfo(200, "success", map);
+        return new ResultInfo<>(200, "success", map);
     }
-    public static ResultInfo success(List<?> data){
-        return new ResultInfo(200, "success", data);
+
+    public static ResultInfo<List<?>> success(List<?> data) {
+        return new ResultInfo<>(200, "success", data);
     }
-    public static ResultInfo fail(String data){
-        return new ResultInfo(300, "error", data);
+
+    public static ResultInfo<String> fail(String data) {
+        return new ResultInfo<>(300, "error", data);
     }
-    public static ResultInfo fail(){
-        return new ResultInfo(300,"error", null);
+
+    public static ResultInfo<String> fail() {
+        return new ResultInfo<>(300, "error", null);
     }
-    public static ResultInfo fail(Integer code,String data){
-        return new ResultInfo(code, "error", data);
+
+    public static ResultInfo<String> fail(Integer code, String data) {
+        return new ResultInfo<>(code, "error", data);
     }
 }
