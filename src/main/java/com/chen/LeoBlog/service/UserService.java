@@ -1,6 +1,5 @@
 package com.chen.LeoBlog.service;
 
-import cn.hutool.captcha.LineCaptcha;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.User;
