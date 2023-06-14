@@ -43,5 +43,6 @@ public interface ArticleService extends IService<Article> {
     ResultInfo collectArticle(Long articleId);
 
     ResultInfo getArticleListByContent(String content, Integer page, Integer size);
+    ResultInfo getFollowArticles(Long userId,int offset,Long lastScore);
 
 }

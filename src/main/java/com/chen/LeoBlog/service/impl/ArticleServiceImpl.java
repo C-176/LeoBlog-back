@@ -1,6 +1,7 @@
 package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -20,6 +21,7 @@ import com.chen.LeoBlog.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,16 +85,18 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
 
     @Override
     public ResultInfo addArticle(Map<String, Object> map) {
+
         Article article = new Article();
         Object labels1 = map.get("labels");
         if (labels1 != null) {
             List<Label> labels = JSONUtil.toList(JSONUtil.toJsonStr(labels1), Label.class);
             List<Long> ids = labels.stream().map(Label::getLabelId).toList();
-            setArticleLabelService.setLabelList(article.getArticleId(), ids);
+            setArticleLabelService.setLabelList(articleId, ids);
         }
 
         article.setArticleId(idUtil.nextId("article"));
-        article.setUserId(Local.getUser().getUserId());
+        UserDto user = Local.getUser();
+        article.setUserId(user.getUserId());
         article.setArticleTitle(map.get("articleTitle").toString());
         article.setArticleContent(map.get("articleContent").toString());
         article.setArticleUpdateDate(new Date());
@@ -100,12 +104,25 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
         article.setIsArticle(Integer.parseInt(map.getOrDefault("isArticle", 0).toString()));
 
         boolean isSuccess = save(article);
-        String key = RedisConstant.ARTICLE_INFO + article.getArticleId();
-        redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
         if (!isSuccess) {
             return ResultInfo.fail("添加失败");
         }
-        return ResultInfo.success(article.getArticleId());
+        Long articleId = article.getArticleId();
+        String key = RedisConstant.ARTICLE_INFO + articleId;
+        redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
+        // 将文章推送到关注者的收件箱中
+        String followKey = RedisConstant.BEFOLLOWED_USER_LIST + user.getUserId();
+        Set<String> followers = redisTemplate.opsForSet().members(followKey);
+        if(followers != null && !followers.isEmpty()) {
+            List<Long> list = followers.stream().map(Long::parseLong).toList();
+            list.forEach(id -> {
+                // 遍历添加到收件箱中
+                redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX+id, articleId +"",System.currentTimeMillis());
+            });
+        }
+
+
+        return ResultInfo.success(articleId);
 
     }
 
@@ -205,6 +222,38 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
         Page<Article> articlePage = new Page<>(page, size);
         articleMapper.selectPage(articlePage, new QueryChainWrapper<>(articleMapper).like("article_content", content).orderByDesc("article_update_date").getWrapper());
         return ResultInfo.success(articlePage);
+    }
+
+    @Override
+    public ResultInfo getFollowArticles(Long userId,int offset,Long lastScore) {
+        String messageBox = RedisConstant.MESSAGE_BOX_PREFIX + userId;
+        // 取出所有的文章id
+        Set<ZSetOperations.TypedTuple<String>> typedTuples = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(messageBox, offset, lastScore);
+
+        if(typedTuples == null || typedTuples.isEmpty()) {
+            return ResultInfo.success(new ArrayList<>());
+        }
+        // 转化为Long
+        Double score = typedTuples.iterator().next().getScore();
+
+        offset = 1;
+        List<Long> articleIds = new ArrayList<>();
+
+        for ( ZSetOperations.TypedTuple<String> typedTuple : typedTuples) {
+            assert score != null;
+            if(score.equals(typedTuple.getScore())){
+                offset++;
+            }else{
+                score = typedTuple.getScore();
+                offset = 1;
+            }
+            long value = Long.parseLong(Objects.requireNonNull(typedTuple.getValue()));
+            articleIds.add(value);
+        }
+        String ids = StrUtil.join(",", articleIds);
+        // 查询，并且保证顺序
+        List<Article> articles = query().in("article_id", articleIds).last("order by field(" + ids + ")").list();
+        return ResultInfo.success(Map.of("articles", articles, "offset", offset, "lastScore", Long.parseLong(String.valueOf(score))));
     }
 
     @Override
