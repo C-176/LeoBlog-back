@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author 1
@@ -240,6 +241,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 重置偏移量
         offset = 1;
         List<Long> articleIds = new ArrayList<>();
+        int originalSize = typedTuples.size();
 
         for (ZSetOperations.TypedTuple<String> typedTuple : typedTuples) {
             assert score != null;
@@ -255,7 +257,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
         String ids = StrUtil.join(",", articleIds);
         // 查询，并且保证顺序
+        //无需担心文章被删除，因为文章被删除后，就查不出对应的文章。
         List<Article> articles = query().in("article_id", articleIds).last("order by field(article_id," + ids + ")").list();
+        Set<Long> existIds = articles.stream().map(Article::getArticleId).collect(Collectors.toSet());
+        // 如果查询出来的文章id和redis中的id不一致，说明有文章被删除了，需要删除redis中的数据
+        if (existIds.size() != originalSize) {
+            for (Long id : articleIds) {
+                if (!existIds.contains(id)) {
+                    redisTemplate.opsForZSet().remove(messageBox, id.toString());
+                }
+            }
+        }
 
         return ResultInfo.success(Map.of("articles", articles, "offset", offset, "lastScore", score.longValue()));
     }
