@@ -97,5 +97,38 @@ public class UserController {
     public ResultInfo updateSecurityUser(@RequestBody Map<String,Object> map,@PathVariable("userId") Long userId){
         return userService.updateSecurityUser(map,userId);
     }
+    // 关注
+    @GetMapping("/follow/{followId}")
+    public ResultInfo followUser(@PathVariable("followId") Long followId){
+        return userService.followUser(followId);
+    }
+    // 取消关注
+    @GetMapping("/unfollow/{followId}")
+    public ResultInfo unfollowUser(@PathVariable("followId") Long followId){
+        return userService.unfollowUser(followId);
+    }
+    // 获取关注列表
+    @GetMapping("/followed")
+    public ResultInfo getFollowed(){
+        return userService.getFollowed();
+    }
+    // 获取粉丝列表
+    @GetMapping("/fans")
+    public ResultInfo getFans(){
+        return userService.getFans();
+    }
+    // 获取关注状态
+    @GetMapping("/followStatus/{followId}")
+    public ResultInfo getFollowStatus(@PathVariable("followId") Long followId){
+        return userService.getFollowStatus(followId);
+    }
+    // 获取共同关注列表
+    @GetMapping("/commonFollow/{userId}")
+    public ResultInfo getCommonFollow(@PathVariable("userId") Long userId){
+        return userService.getCommonFollow(userId);
+    }
+
+
+
 
 }

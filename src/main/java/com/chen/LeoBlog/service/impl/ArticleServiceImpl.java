@@ -1,11 +1,12 @@
 package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.baomidou.mybatisplus.extension.toolkit.SqlRunner;
 import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
@@ -15,11 +16,13 @@ import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.po.Label;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.*;
+import com.chen.LeoBlog.utils.BaseUtil;
 import com.chen.LeoBlog.utils.IdUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,8 +38,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
-        implements ArticleService {
+public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> implements ArticleService {
     @Autowired
     private UserService userService;
     @Resource
@@ -74,7 +76,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
         User user = (User) userService.getUser(article.getUserId()).getData();
         Object labels = labelService.getLabelList(articleId).getData();
 
-        Map<String,Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         BeanUtil.beanToMap(article, map, false, true);
         map.put("user", user);
         map.put("labels", labels);
@@ -83,16 +85,19 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
 
     @Override
     public ResultInfo addArticle(Map<String, Object> map) {
+
         Article article = new Article();
         Object labels1 = map.get("labels");
+        Long articleId = idUtil.nextId("article");
         if (labels1 != null) {
             List<Label> labels = JSONUtil.toList(JSONUtil.toJsonStr(labels1), Label.class);
             List<Long> ids = labels.stream().map(Label::getLabelId).toList();
-            setArticleLabelService.setLabelList(article.getArticleId(), ids);
+            setArticleLabelService.setLabelList(articleId, ids);
         }
 
-        article.setArticleId(idUtil.nextId("article"));
-        article.setUserId(Local.getUser().getUserId());
+        article.setArticleId(articleId);
+        UserDto user = Local.getUser();
+        article.setUserId(user.getUserId());
         article.setArticleTitle(map.get("articleTitle").toString());
         article.setArticleContent(map.get("articleContent").toString());
         article.setArticleUpdateDate(new Date());
@@ -100,12 +105,25 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
         article.setIsArticle(Integer.parseInt(map.getOrDefault("isArticle", 0).toString()));
 
         boolean isSuccess = save(article);
-        String key = RedisConstant.ARTICLE_INFO + article.getArticleId();
-        redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
         if (!isSuccess) {
             return ResultInfo.fail("添加失败");
         }
-        return ResultInfo.success(article.getArticleId());
+
+        String key = RedisConstant.ARTICLE_INFO + articleId;
+        redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
+        // 将文章推送到关注者的收件箱中
+        String followKey = RedisConstant.FAN_USER_LIST + user.getUserId();
+        Set<String> followers = redisTemplate.opsForSet().members(followKey);
+        if (followers != null && !followers.isEmpty()) {
+            List<Long> list = followers.stream().map(Long::parseLong).toList();
+            list.forEach(id -> {
+                // 遍历添加到收件箱中
+                redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + id, articleId + "", System.currentTimeMillis());
+            });
+        }
+
+
+        return ResultInfo.success(articleId);
 
     }
 
@@ -114,7 +132,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
         //只有作者才能删除，需要判断
         UserDto user = Local.getUser();
         if (user == null) return ResultInfo.fail("请先登录");
-        Article article =  query().eq("article_id",articleId).one();
+        Article article = query().eq("article_id", articleId).one();
         if (article == null) {
             return ResultInfo.fail("该文章不存在，请刷新页面");
         }
@@ -177,7 +195,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
     @Override
     public ResultInfo collectArticle(Long articleId) {
         String key = RedisConstant.ARTICLE_COLLECT + articleId;
-        Long userId =  query().eq("article_id",articleId).one().getUserId();
+        Long userId = query().eq("article_id", articleId).one().getUserId();
         if (Local.getUser().getUserId().equals(userId)) {
             return ResultInfo.fail("不能收藏自己的文章");
         }
@@ -205,6 +223,53 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
         Page<Article> articlePage = new Page<>(page, size);
         articleMapper.selectPage(articlePage, new QueryChainWrapper<>(articleMapper).like("article_content", content).orderByDesc("article_update_date").getWrapper());
         return ResultInfo.success(articlePage);
+    }
+
+    @Override
+    public ResultInfo getFollowArticles(int offset, Long lastScore) {
+        UserDto user = BaseUtil.getUserFromLocal();
+        int count = 10;
+        String messageBox = RedisConstant.MESSAGE_BOX_PREFIX + user.getUserId();
+        // 取出所有的文章id
+        Set<ZSetOperations.TypedTuple<String>> typedTuples = redisTemplate.opsForZSet()
+                .reverseRangeByScoreWithScores(messageBox, 0, lastScore, offset, count);
+        if (typedTuples == null || typedTuples.isEmpty()) {
+            return ResultInfo.success(new ArrayList<>());
+        }
+        // 转化为Long
+        Double score = RandomUtil.randomDouble();
+        // 重置偏移量
+        offset = 1;
+        List<Long> articleIds = new ArrayList<>();
+        int originalSize = typedTuples.size();
+
+        for (ZSetOperations.TypedTuple<String> typedTuple : typedTuples) {
+            assert score != null;
+            // 计算当前查到数据中最后一个分数的重复个数
+            if (score.equals(typedTuple.getScore())) {
+                offset++;
+            } else { // 如果不相等，说明已经到了下一个分数的数据，重置偏移量
+                score = typedTuple.getScore();
+                offset = 1;
+            }
+            long value = Long.parseLong(Objects.requireNonNull(typedTuple.getValue()));
+            articleIds.add(value);
+        }
+        String ids = StrUtil.join(",", articleIds);
+        // 查询，并且保证顺序
+        //无需担心文章被删除，因为文章被删除后，就查不出对应的文章。
+        List<Article> articles = query().in("article_id", articleIds).last("order by field(article_id," + ids + ")").list();
+        Set<Long> existIds = articles.stream().map(Article::getArticleId).collect(Collectors.toSet());
+        // 如果查询出来的文章id和redis中的id不一致，说明有文章被删除了，需要删除redis中的数据
+        if (existIds.size() != originalSize) {
+            for (Long id : articleIds) {
+                if (!existIds.contains(id)) {
+                    redisTemplate.opsForZSet().remove(messageBox, id.toString());
+                }
+            }
+        }
+
+        return ResultInfo.success(Map.of("articles", articles, "offset", offset, "lastScore", score.longValue()));
     }
 
     @Override
@@ -260,7 +325,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article>
     @Override
     public ResultInfo likeArticle(Long articleId) {
         String key = RedisConstant.ARTICLE_LIKE + articleId;
-        Long userId = query().eq("article_id",articleId).one().getUserId();
+        Long userId = query().eq("article_id", articleId).one().getUserId();
         if (Local.getUser().getUserId().equals(userId)) {
             return ResultInfo.fail("不能给自己的文章点赞");
         }

@@ -34,4 +34,16 @@ public interface UserService extends IService<User> {
     ResultInfo updateSecurityUser(Map<String, Object> map, Long userId);
 
     ResultInfo changePwd(Map<String, Object> map);
+
+    ResultInfo followUser(Long followId);
+
+    ResultInfo getFollowStatus(Long followId);
+
+    ResultInfo getCommonFollow(Long userId);
+
+    ResultInfo getFans();
+
+    ResultInfo getFollowed();
+
+    ResultInfo unfollowUser(Long followId);
 }

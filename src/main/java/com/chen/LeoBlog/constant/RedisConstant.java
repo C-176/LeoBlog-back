@@ -1,6 +1,8 @@
 package com.chen.LeoBlog.constant;
 
 public class RedisConstant {
+    // 通用过期时间
+    public static final Long TTL = 7L;
     //登陆后用户信息
     public static final String USER_LOGIN = "user:login:";
     //刷新token登陆时间
@@ -51,6 +53,15 @@ public class RedisConstant {
     //徽章库存
     public static final String BADGE_STOCK = "badge:stock:";
     public static final long BADGE_STOCK_TTL = 7L;
+
+    //关注列表：我关注了谁
+    public static final String FOLLOW_USER_LIST = "follow:user:";
+
+    //被关注列表:有哪些人关注了我
+    public static final String FAN_USER_LIST = "fan:user:";
+
+    // 收件箱
+    public static final String MESSAGE_BOX_PREFIX = "message:article:";
 
 
 }
