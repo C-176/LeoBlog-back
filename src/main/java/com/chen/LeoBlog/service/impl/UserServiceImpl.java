@@ -16,6 +16,7 @@ import com.chen.LeoBlog.dto.UserDto;
 import com.chen.LeoBlog.mapper.UserMapper;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
+import com.chen.LeoBlog.utils.AssertUtil;
 import com.chen.LeoBlog.utils.IdUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -25,14 +26,12 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.chen.LeoBlog.constant.BaseConstant.*;
+import static com.chen.LeoBlog.utils.BaseUtil.getUserFromLocal;
 
 /**
  * @author 1
@@ -297,10 +296,90 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    public ResultInfo followUser(Long followId) {
+        UserDto user = getUserFromLocal();
+        Long userId = user.getUserId();
+        if (userId.equals(followId)) return ResultInfo.fail("不能关注自己");
+        // 查询是否已经关注
+        String followKey = RedisConstant.FOLLOW_USER_LIST + userId;
+        String fansKey = RedisConstant.FAN_USER_LIST + followId;
+        try {
+            Boolean isMember = redisTemplate.opsForSet().isMember(followKey, followId.toString());
+            if (Boolean.TRUE.equals(isMember)) return ResultInfo.fail("不能重复关注");
+            redisTemplate.opsForSet().add(followKey, followId.toString());
+            redisTemplate.opsForSet().add(fansKey, userId.toString());
+        } catch (Exception e) {
+            log.error("关注失败:->{}", userId, e);
+            return ResultInfo.fail("关注失败");
+        }
+        return ResultInfo.success("关注成功");
+    }
+
+    @Override
+    public ResultInfo unfollowUser(Long followId) {
+        UserDto user = getUserFromLocal();
+        Long userId = user.getUserId();
+        if (userId.equals(followId)) return ResultInfo.fail("不能取关自己");
+        // 查询是否已经关注
+        String followKey = RedisConstant.FOLLOW_USER_LIST + userId;
+        String fansKey = RedisConstant.FAN_USER_LIST + followId;
+        try {
+            Boolean isMember = redisTemplate.opsForSet().isMember(followKey, followId.toString());
+            if (Boolean.FALSE.equals(isMember)) return ResultInfo.fail("不能取关未关注的用户");
+            redisTemplate.opsForSet().remove(followKey, followId.toString());
+            redisTemplate.opsForSet().remove(fansKey, userId.toString());
+        } catch (Exception e) {
+            log.error("取关失败:->{}", userId, e);
+            return ResultInfo.fail("取关失败");
+        }
+        return ResultInfo.success("取关成功");
+
+    }
+
+    @Override
+    public ResultInfo getFollowStatus(Long followId) {
+
+        UserDto user = getUserFromLocal();
+        String followKey = RedisConstant.FOLLOW_USER_LIST + user.getUserId();
+        Boolean isMember = redisTemplate.opsForSet().isMember(followKey, followId.toString());
+        return ResultInfo.success(isMember);
+    }
+
+    @Override
+    public ResultInfo getCommonFollow(Long userId) {
+        UserDto user = getUserFromLocal();
+        String followKey1 = RedisConstant.FOLLOW_USER_LIST + user.getUserId();
+        String followKey2 = RedisConstant.FOLLOW_USER_LIST + userId;
+        Set<String> intersect = redisTemplate.opsForSet().intersect(followKey1, followKey2);
+        return ResultInfo.success(intersect);
+    }
+
+    @Override
+    public ResultInfo getFans() {
+        UserDto user = getUserFromLocal();
+        String fansKey = RedisConstant.FAN_USER_LIST + user.getUserId();
+        Set<String> members = redisTemplate.opsForSet().members(fansKey);
+        return ResultInfo.success(members);
+    }
+
+    @Override
+    public ResultInfo getFollowed() {
+        UserDto user = getUserFromLocal();
+        String followKey = RedisConstant.FOLLOW_USER_LIST + user.getUserId();
+        Set<String> members = redisTemplate.opsForSet().members(followKey);
+        return ResultInfo.success(members);
+    }
+
+
+    @Override
     public ResultInfo deleteUser(Long userId) {
         //TODO:如果是管理员，可以删除用户，否则只能删除自己
-
         log.info("删除用户:{}", userId);
+        UserDto loginedUser = getUserFromLocal();
+        if (!loginedUser.getUserId().equals(userId)) {
+            return ResultInfo.fail("无权操作");
+        }
+
         String key = RedisConstant.USER_INFO + userId;
         User user = query().eq("user_id", userId).one();
         if (user == null) return ResultInfo.fail("用户不存在");
@@ -375,6 +454,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         BeanUtil.copyProperties(user, userDto);
         redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN + token, JSONUtil.toJsonStr(userDto), RedisConstant.USER_LOGIN_TTL, TimeUnit.DAYS);
     }
+
+
 }
 
 

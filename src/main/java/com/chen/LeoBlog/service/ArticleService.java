@@ -7,10 +7,10 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import java.util.Map;
 
 /**
-* @author 1
-* @description 针对表【lb_article】的数据库操作Service
-* @createDate 2022-10-17 10:33:52
-*/
+ * @author 1
+ * @description 针对表【lb_article】的数据库操作Service
+ * @createDate 2022-10-17 10:33:52
+ */
 public interface ArticleService extends IService<Article> {
     ResultInfo getArticleList(Integer page, Integer size);
 
@@ -30,7 +30,7 @@ public interface ArticleService extends IService<Article> {
 
     ResultInfo getArticleSumBySortId(Long sortId);
 
-    ResultInfo getArticleListByLabelId(Long labelId,Map<String, Object> map, Integer page, Integer size);
+    ResultInfo getArticleListByLabelId(Long labelId, Map<String, Object> map, Integer page, Integer size);
 
     ResultInfo getArticleSumByLabelId(Long labelId);
 
@@ -43,6 +43,7 @@ public interface ArticleService extends IService<Article> {
     ResultInfo collectArticle(Long articleId);
 
     ResultInfo getArticleListByContent(String content, Integer page, Integer size);
-    ResultInfo getFollowArticles(Long userId,int offset,Long lastScore);
+
+    ResultInfo getFollowArticles(int offset, Long lastScore);
 
 }

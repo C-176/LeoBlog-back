@@ -66,9 +66,9 @@ public class ArticleController {
     }
 
     //查询关注列表中的新发文章
-    @GetMapping("/follow/{userId}/{offset}/{lastScore}")
-    public ResultInfo getFollowArticles(@PathVariable("userId") Long userId,@PathVariable("offset") int offset,@PathVariable("lastScore") Long lastScore) {
-        return articleService.getFollowArticles(userId,offset,lastScore);
+    @GetMapping("/follow/{offset}/{lastScore}")
+    public ResultInfo getFollowArticles(@PathVariable("offset") int offset,@PathVariable("lastScore") Long lastScore) {
+        return articleService.getFollowArticles(offset,lastScore);
     }
 
     //根据分类id获取文章列表

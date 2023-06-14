@@ -58,7 +58,7 @@ public class RedisConstant {
     public static final String FOLLOW_USER_LIST = "follow:user:";
 
     //被关注列表:有哪些人关注了我
-    public static final String BEFOLLOWED_USER_LIST = "follow:user:";
+    public static final String FAN_USER_LIST = "fan:user:";
 
     // 收件箱
     public static final String MESSAGE_BOX_PREFIX = "message:article:";
