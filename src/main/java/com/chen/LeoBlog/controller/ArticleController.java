@@ -65,6 +65,12 @@ public class ArticleController {
         return articleService.getArticleSumByUserId(userId);
     }
 
+    //查询关注列表中的新发文章
+    @GetMapping("/follow/{offset}/{lastScore}")
+    public ResultInfo getFollowArticles(@PathVariable("offset") int offset,@PathVariable("lastScore") Long lastScore) {
+        return articleService.getFollowArticles(offset,lastScore);
+    }
+
     //根据分类id获取文章列表
     @GetMapping("/list/sort/{sortId}")
     public ResultInfo getArticleListBySortId(@PathVariable("sortId") Long sortId) {
@@ -105,16 +111,16 @@ public class ArticleController {
 
     //点赞文章
     @PutMapping("/like/{articleId}")
-    public ResultInfo likeArticle(@PathVariable("articleId") String articleId) {
-        return articleService.likeArticle(Long.parseLong(articleId));
+    public ResultInfo likeArticle(@PathVariable("articleId") Long articleId) {
+        return articleService.likeArticle(articleId);
     }
 
     //收藏文章
     @PutMapping("/collect/{articleId}")
-    public ResultInfo collectArticle(@PathVariable("articleId") String articleId) {
+    public ResultInfo collectArticle(@PathVariable("articleId") Long articleId) {
         log.info("articleId:{}", articleId);
-        log.info("articleId:{}", Long.parseLong(articleId));
-        return articleService.collectArticle(Long.parseLong(articleId));
+        log.info("articleId:{}", articleId);
+        return articleService.collectArticle(articleId);
     }
 
 

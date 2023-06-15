@@ -127,12 +127,12 @@ public class SocketEndPointController {
         } else if (receiverId == 1) {
             // AI对话
             DevChatRequest devChatRequest = new DevChatRequest();
-            devChatRequest.setModelId(1651468516836098050L);
+            // 修改模型Id
+            devChatRequest.setModelId(1654785040361893889L);
             devChatRequest.setMessage(record.getRecordContent());
 //            BaseResponse<DevChatResponse> response = client.doChat(devChatRequest);
 //            System.out.println(response.getData());
             BaseResponse<DevChatResponse> response = socketEndpoint.yuCongMingClient.doChat(devChatRequest);
-            System.out.println(response);
             record.setReceiverId(record.getUserId());
             record.setUserId(receiverId);
             record.setRecordUpdateTime(new Date());
@@ -141,6 +141,7 @@ public class SocketEndPointController {
                 String content = response.getData().getContent();
                 record.setRecordContent(content);
             } else {
+                log.error("AI回复失败:{}", response);
                 record.setRecordContent("我还小，不知道你在说什么");
             }
             socketEndpoint.socketService.sendMessage(onlineUsers.get(userId), JSONUtil.toJsonStr(record));
