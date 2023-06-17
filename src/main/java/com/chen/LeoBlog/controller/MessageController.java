@@ -22,10 +22,16 @@ public class MessageController {
         return messageService.getMsgByUserId(userId, page, size);
     }
 
-    @PostMapping("/add")
-    public ResultInfo addMessage(@RequestBody Map<String, Object> map) {
-        return messageService.addMessage(map);
+    @GetMapping("/{offset}/{lastScore}")
+    public ResultInfo getMsgFromBox(@PathVariable("offset") Integer offset, @PathVariable("lastScore") Long lastScore) {
+        return messageService.getMsgFromBox(offset, lastScore);
     }
+
+
+//    @PostMapping("/add")
+//    public ResultInfo addMessage(@RequestBody Map<String, Object> map) {
+//        return messageService.addMessage(map);
+//    }
 
     @DeleteMapping("/{messageId}")
     public ResultInfo deleteMessage(@PathVariable("messageId") Long messageId) {

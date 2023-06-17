@@ -7,7 +7,7 @@ server:
 static-path:
   D:\\Javacode\\LeoBlog-back\\src\\main\\resources\\static\\
 ip:
-  localhost:8080
+  http://localhost:8080/
 
 
 

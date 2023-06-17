@@ -7,7 +7,7 @@ server:
 static-path:
   /www/server/nginx/html/backend/
 ip:
-  49.235.100.240:8080
+  http://49.235.100.240:8080/
 #  静态资源
 #  Path: src/main/resources/static
 spring:

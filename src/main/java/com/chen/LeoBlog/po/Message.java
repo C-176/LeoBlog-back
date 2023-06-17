@@ -6,7 +6,10 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 
@@ -14,11 +17,14 @@ import lombok.Data;
  */
 @TableName(value ="lb_message")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+
 public class Message implements Serializable {
     /**
      * 
      */
-    @TableId(type = IdType.AUTO)
+    @TableId
     private Long messageId;
 
     /**
@@ -63,4 +69,12 @@ public class Message implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    public Message(Long messageId, Long userId, Long receiverId, String messageTitle, String messageRedirect) {
+        this.messageId = messageId;
+        this.userId = userId;
+        this.receiverId = receiverId;
+        this.messageTitle = messageTitle;
+        this.messageRedirect = messageRedirect;
+    }
 }
