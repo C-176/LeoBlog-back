@@ -11,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
 
 import static com.chen.LeoBlog.constant.BaseConstant.UPLOAD_IMG_PATH;
@@ -25,7 +24,7 @@ public class UploadService {
     @Value("${static-path}")
     private String staticPath;
     @Value("${ip}")
-    private String ip;
+    private String serverPrefix;
 
 
     /**
@@ -85,7 +84,7 @@ public class UploadService {
             return Map.of("errno",1,"message",e.getMessage());
         }
         //获取请求地址
-        return Map.of("errno", 0, "url", "http://" + ip + imageUrl);
+        return Map.of("errno", 0, "url", serverPrefix + imageUrl);
 
     }
 

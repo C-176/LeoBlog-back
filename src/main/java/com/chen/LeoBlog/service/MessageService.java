@@ -15,9 +15,11 @@ public interface MessageService extends IService<Message> {
 
     ResultInfo getMsgByUserId(Long userId, Integer page, Integer size);
 
-    ResultInfo addMessage(Map<String, Object> map);
+    boolean addMessage(Message message);
 
     ResultInfo deleteMessage(Long messageId);
 
     ResultInfo readMessage(Long messageId);
+
+    ResultInfo getMsgFromBox(Integer offset, Long lastScore);
 }

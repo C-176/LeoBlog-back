@@ -175,6 +175,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
             redisTemplate.opsForSet().add(RedisConstant.BADGE_OWNER + badgeId, String.valueOf(user.getUserId()));
             Long orderId = idUtil.nextId("order");
             orderService.addOrder(new Order(orderId, user.getUserId(), Long.parseLong(badgeId), new Date()));
+            redisTemplate.delete(RedisConstant.ACCOUNT_INFO + user.getUserId());
             return ResultInfo.success("购买成功");
         } catch (Exception e) {
 //            log.error("购买徽章失败，用户ID:{},徽章ID:{}", badgeId, user1.getUserId(), e);
@@ -293,6 +294,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
                 redisTemplate.opsForSet().add(RedisConstant.BADGE_OWNER + badgeId, String.valueOf(user.getUserId()));
                 orderService.addOrder(new Order(orderId, user.getUserId(), Long.parseLong(badgeId), new Date()));
                 update().eq("badge_id", badgeId).set("badge_stock", badge.getBadgeStock() - 1).update();
+                redisTemplate.delete(RedisConstant.ACCOUNT_INFO + user.getUserId());
                 return ResultInfo.success("购买成功");
             } catch (Exception e) {
                 log.error("购买徽章失败，用户ID:{},徽章ID:{}", badgeId, user.getUserId(), e);

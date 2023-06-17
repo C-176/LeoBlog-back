@@ -54,8 +54,8 @@ public class MvcConfig extends WebMvcConfigurerAdapter {
         return dataSource;
     }
 
-    @Bean(name = "asyncExecutor")
-    public Executor taskExecutor() {
+    @Bean
+    public Executor asyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         //随便写的一些配置
         executor.setCorePoolSize(10);

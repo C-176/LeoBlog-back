@@ -7,10 +7,10 @@ import com.chen.LeoBlog.po.User;
 import java.util.Map;
 
 /**
-* @author 1
-* @description 针对表【lb_user】的数据库操作Service
-* @createDate 2022-10-14 17:36:34
-*/
+ * @author 1
+ * @description 针对表【lb_user】的数据库操作Service
+ * @createDate 2022-10-14 17:36:34
+ */
 public interface UserService extends IService<User> {
 
     ResultInfo login(Map<String, Object> map, String token);
@@ -46,4 +46,6 @@ public interface UserService extends IService<User> {
     ResultInfo getFollowed();
 
     ResultInfo unfollowUser(Long followId);
+
+    User getUserObj(Long userId);
 }
