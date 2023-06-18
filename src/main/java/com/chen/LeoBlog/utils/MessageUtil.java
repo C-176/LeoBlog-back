@@ -18,6 +18,7 @@ public class MessageUtil {
     // 发文章
     public String getArticleMessage(String userNickname, String title) {
 //        User userObj = userService.getUserObj(userId);
+//        return userNickname + "发表了文章《" + title + "》";
         return userNickname + "发表了文章《" + title + "》";
     }
 
