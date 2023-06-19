@@ -393,6 +393,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         asyncExecutor.execute(() -> {
             // 遍历添加到收件箱中
             Long msgId = idUtil.nextId("msg");
+            Long receiverId = article.getUserId();
             String msgTitle = "";
             switch (type) {
                 case 0 -> msgTitle = messageUtil.getArticleMessage("", article.getArticleTitle());
@@ -400,7 +401,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 case 2 -> msgTitle = messageUtil.getCollectMessage("", article.getArticleTitle());
                 case 3 -> msgTitle = messageUtil.getLikeMessage("", article.getArticleTitle());
             }
-            Long receiverId = article.getUserId();
+
             MsgType m;
             if (type == 0) {
                 m = MsgType.PUBLISH_ARTICLE;
@@ -413,7 +414,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 m = MsgType.LIKE_ARTICLE;
             }
 
-            Message message = new Message(msgId, user.getUserId(), receiverId, msgTitle, m, article.getArticleId().toString());
+            Message message = new Message(msgId, user.getUserId(), receiverId, msgTitle, article.getArticleId().toString());
             boolean isSaved = messageService.save(message);
             if (!isSaved) {
                 log.error("消息保存失败:{}", msgId);

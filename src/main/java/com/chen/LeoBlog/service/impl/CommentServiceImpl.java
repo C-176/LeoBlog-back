@@ -173,11 +173,14 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         Article article = articleService.query().eq("article_id", comment.getArticleId()).one();
 
         String commentMessage = messageUtil.getCommentMessage("", article.getArticleTitle());
-        Long msgId = idUtil.nextId("msg");
-        Long receiverId = comment.getReceiverId();
-        messageService.save(new Message(msgId, comment.getUserId(), receiverId, commentMessage, MsgType.COMMENT_ARTICLE, comment.getArticleId() + ""));
-        redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + receiverId, msgId + "", System.currentTimeMillis());
 
+        Long receiverId = comment.getReceiverId();
+        // 确认接收者不是自己
+        if (!comment.getUserId().equals(receiverId)) {
+            Long msgId = idUtil.nextId("msg");
+            messageService.save(new Message(msgId, comment.getUserId(), receiverId, commentMessage, MsgType.COMMENT_ARTICLE, comment.getArticleId() + ""));
+            redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + receiverId, msgId + "", System.currentTimeMillis());
+        }
         if (isSuccess) {
             return ResultInfo.success("评论成功");
         }

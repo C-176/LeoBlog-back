@@ -62,7 +62,7 @@ public class Message implements Serializable {
      * type:0-发表文章 1-评论文章 2-收藏文章 3-点赞文章
      * 4-关注用户 5-回复评论 6-系统消息
      */
-    private MsgType messageType;
+    private Integer messageType;
 
     /**
      * 
@@ -84,7 +84,8 @@ public class Message implements Serializable {
         this.userId = userId;
         this.receiverId = receiverId;
         this.messageTitle = messageTitle;
-        this.messageType = messageType;
+        this.messageType = messageType.getCode();
         this.messageRedirect = messageRedirect;
+        this.messageUpdateTime = new Date();
     }
 }
