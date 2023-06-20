@@ -61,7 +61,7 @@ public class RedisConstant {
     public static final String FAN_USER_LIST = "fan:user:";
 
     // 收件箱
-    public static final String MESSAGE_BOX_PREFIX = "message:article:";
+    public static final String MESSAGE_BOX_PREFIX = "message:";
 
 
 }

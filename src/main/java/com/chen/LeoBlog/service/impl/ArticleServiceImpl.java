@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.Local;
+import com.chen.LeoBlog.base.MsgType;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDto;
@@ -119,7 +120,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             return ResultInfo.fail("添加失败");
         }
 
-        String msgTitle = messageUtil.getArticleMessage(user.getUserNickname(), article.getArticleTitle());
+        String msgTitle = messageUtil.getArticleMessage("", article.getArticleTitle());
 
         String key = RedisConstant.ARTICLE_INFO + articleId;
         redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
@@ -135,7 +136,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 asyncExecutor.execute(() -> {
                     // 遍历添加到收件箱中
                     Long msgId = idUtil.nextId("msg");
-                    Message message = new Message(msgId, user.getUserId(), id, msgTitle, articleId.toString());
+                    Message message = new Message(msgId, user.getUserId(), id, msgTitle, MsgType.PUBLISH_ARTICLE, articleId.toString());
                     boolean isSaved = messageService.save(message);
                     if (!isSaved) {
                         log.error("消息保存失败:{}", msgId);
@@ -392,14 +393,27 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         asyncExecutor.execute(() -> {
             // 遍历添加到收件箱中
             Long msgId = idUtil.nextId("msg");
+            Long receiverId = article.getUserId();
             String msgTitle = "";
             switch (type) {
-                case 0 -> msgTitle = messageUtil.getArticleMessage(user.getUserNickname(), article.getArticleTitle());
-                case 1 -> msgTitle = messageUtil.getCommentMessage(user.getUserNickname(), article.getArticleTitle());
-                case 2 -> msgTitle = messageUtil.getCollectMessage(user.getUserNickname(), article.getArticleTitle());
-                case 3 -> msgTitle = messageUtil.getLikeMessage(user.getUserNickname(), article.getArticleTitle());
+                case 0 -> msgTitle = messageUtil.getArticleMessage("", article.getArticleTitle());
+                case 1 -> msgTitle = messageUtil.getCommentMessage("", article.getArticleTitle());
+                case 2 -> msgTitle = messageUtil.getCollectMessage("", article.getArticleTitle());
+                case 3 -> msgTitle = messageUtil.getLikeMessage("", article.getArticleTitle());
             }
-            Long receiverId = article.getUserId();
+
+            MsgType m;
+            if (type == 0) {
+                m = MsgType.PUBLISH_ARTICLE;
+            } else if (type == 1) {
+                m = MsgType.COMMENT_ARTICLE;
+            } else if (type == 2) {
+                m = MsgType.COLLECT_ARTICLE;
+            }
+            {
+                m = MsgType.LIKE_ARTICLE;
+            }
+
             Message message = new Message(msgId, user.getUserId(), receiverId, msgTitle, article.getArticleId().toString());
             boolean isSaved = messageService.save(message);
             if (!isSaved) {

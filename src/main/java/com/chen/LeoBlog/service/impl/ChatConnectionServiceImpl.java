@@ -75,12 +75,6 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
             list.removeIf(chatConnection -> chatConnection.getChatUserId() == -1);
             list.forEach(user -> redisTemplate.opsForZSet().add(key, user.getChatUserId().toString(), user.getChatLastTime().getTime()));
             ids.addAll(list.stream().map(ChatConnection::getChatUserId).toList());
-            if (ids.size() == 0) {
-                ids.add(1L);
-                redisTemplate.opsForZSet().add(key, "1", new Date().getTime());
-//                return ResultInfo.success("暂无聊天对象，快去找人吧");
-            }
-
         }
         ids.add(0, -1L);
 
