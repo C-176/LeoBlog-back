@@ -6,7 +6,11 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.util.Date;
+
+import com.chen.LeoBlog.base.MsgType;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 
@@ -14,11 +18,14 @@ import lombok.Data;
  */
 @TableName(value ="lb_message")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+
 public class Message implements Serializable {
     /**
      * 
      */
-    @TableId(type = IdType.AUTO)
+    @TableId
     private Long messageId;
 
     /**
@@ -52,7 +59,8 @@ public class Message implements Serializable {
     private Integer isSaw;
 
     /**
-     * 0：普通，-1为全体消息。
+     * type:0-发表文章 1-评论文章 2-收藏文章 3-点赞文章
+     * 4-关注用户 5-回复评论 6-系统消息
      */
     private Integer messageType;
 
@@ -63,4 +71,21 @@ public class Message implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    public Message(Long messageId, Long userId, Long receiverId, String messageTitle, String messageRedirect) {
+        this.messageId = messageId;
+        this.userId = userId;
+        this.receiverId = receiverId;
+        this.messageTitle = messageTitle;
+        this.messageRedirect = messageRedirect;
+    }
+    public Message(Long messageId, Long userId, Long receiverId, String messageTitle,MsgType messageType, String messageRedirect) {
+        this.messageId = messageId;
+        this.userId = userId;
+        this.receiverId = receiverId;
+        this.messageTitle = messageTitle;
+        this.messageType = messageType.getCode();
+        this.messageRedirect = messageRedirect;
+        this.messageUpdateTime = new Date();
+    }
 }

@@ -79,7 +79,7 @@ public class SocketEndPointController {
         Long[] idArr = ids.toArray(new Long[0]);
         Set<Long> onlineIds = getSessionMap().keySet();
         List<Integer> status = Arrays.stream(idArr)
-                .map(id -> onlineIds.contains(id) ? 1 : 0).toList();
+                .map(id -> onlineIds.contains(id) || id < 10 ? 1 : 0).toList();
         return ResultInfo.success(status);
     }
 

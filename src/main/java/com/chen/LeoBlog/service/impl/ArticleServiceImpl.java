@@ -8,16 +8,19 @@ import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.Local;
+import com.chen.LeoBlog.base.MsgType;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDto;
 import com.chen.LeoBlog.mapper.ArticleMapper;
 import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.po.Label;
+import com.chen.LeoBlog.po.Message;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.*;
 import com.chen.LeoBlog.utils.BaseUtil;
 import com.chen.LeoBlog.utils.IdUtil;
+import com.chen.LeoBlog.utils.MessageUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -55,6 +60,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private RedisUtil redisUtil;
     @Resource
     private IdUtil idUtil;
+    @Resource
+    private MessageService messageService;
+    @Resource
+    private MessageUtil messageUtil;
+    @Autowired
+    private Executor asyncExecutor;
 
     @Override
     public ResultInfo getArticleList(Integer page, Integer size) {
@@ -96,7 +107,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         article.setArticleId(articleId);
-        UserDto user = Local.getUser();
+        UserDto user = BaseUtil.getUserFromLocal();
         article.setUserId(user.getUserId());
         article.setArticleTitle(map.get("articleTitle").toString());
         article.setArticleContent(map.get("articleContent").toString());
@@ -109,19 +120,31 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             return ResultInfo.fail("添加失败");
         }
 
+        String msgTitle = messageUtil.getArticleMessage("", article.getArticleTitle());
+
         String key = RedisConstant.ARTICLE_INFO + articleId;
         redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
+        // 如果是草稿，无需推送
+        if (article.getIsArticle() == 0) return ResultInfo.success("保存成功");
         // 将文章推送到关注者的收件箱中
         String followKey = RedisConstant.FAN_USER_LIST + user.getUserId();
         Set<String> followers = redisTemplate.opsForSet().members(followKey);
         if (followers != null && !followers.isEmpty()) {
             List<Long> list = followers.stream().map(Long::parseLong).toList();
             list.forEach(id -> {
-                // 遍历添加到收件箱中
-                redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + id, articleId + "", System.currentTimeMillis());
+                // 异步保存消息
+                asyncExecutor.execute(() -> {
+                    // 遍历添加到收件箱中
+                    Long msgId = idUtil.nextId("msg");
+                    Message message = new Message(msgId, user.getUserId(), id, msgTitle, MsgType.PUBLISH_ARTICLE, articleId.toString());
+                    boolean isSaved = messageService.save(message);
+                    if (!isSaved) {
+                        log.error("消息保存失败:{}", msgId);
+                    }
+                    redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + id, msgId + "", System.currentTimeMillis());
+                });
             });
         }
-
 
         return ResultInfo.success(articleId);
 
@@ -195,22 +218,27 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public ResultInfo collectArticle(Long articleId) {
         String key = RedisConstant.ARTICLE_COLLECT + articleId;
-        Long userId = query().eq("article_id", articleId).one().getUserId();
-        if (Local.getUser().getUserId().equals(userId)) {
+        Article article = query().eq("article_id", articleId).one();
+        Long receiverId = article.getUserId();
+        UserDto user = BaseUtil.getUserFromLocal();
+        Long userId = user.getUserId();
+        if (userId.equals(receiverId)) {
             return ResultInfo.fail("不能收藏自己的文章");
         }
-        Boolean isContain = redisTemplate.opsForSet().isMember(key, Local.getUser().getUserId().toString());
+        Boolean isContain = redisTemplate.opsForSet().isMember(key, userId.toString());
         if (Boolean.TRUE.equals(isContain)) {
-            redisTemplate.opsForSet().remove(key, Local.getUser().getUserId().toString());
+            redisTemplate.opsForSet().remove(key, userId.toString());
             update().eq("article_id", articleId).setSql("article_collects = article_collects - 1").update();
             redisTemplate.delete(RedisConstant.ARTICLE_INFO + articleId);
             return ResultInfo.success("取消收藏成功");
         } else {
             boolean isSuccess = false;
             try {
-                redisTemplate.opsForSet().add(key, Local.getUser().getUserId().toString());
+                redisTemplate.opsForSet().add(key, userId.toString());
                 isSuccess = update().eq("article_id", articleId).setSql("article_collects = article_collects + 1").update();
                 redisTemplate.delete(RedisConstant.ARTICLE_INFO + articleId);
+                // 异步保存消息
+                asySaveMsg(article, user, 2);
             } catch (Exception e) {
                 log.error("收藏失败", e);
             }
@@ -325,28 +353,74 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public ResultInfo likeArticle(Long articleId) {
         String key = RedisConstant.ARTICLE_LIKE + articleId;
-        Long userId = query().eq("article_id", articleId).one().getUserId();
-        if (Local.getUser().getUserId().equals(userId)) {
-            return ResultInfo.fail("不能给自己的文章点赞");
+        Article article = query().eq("article_id", articleId).one();
+        Long receiverId = article.getUserId();
+        UserDto user = BaseUtil.getUserFromLocal();
+        Long userId = user.getUserId();
+        if (userId.equals(receiverId)) {
+            return ResultInfo.fail("不能点赞自己的文章");
         }
-        Boolean isContain = redisTemplate.opsForSet().isMember(key, Local.getUser().getUserId().toString());
+        Boolean isContain = redisTemplate.opsForSet().isMember(key, userId.toString());
         if (Boolean.TRUE.equals(isContain)) {
-            redisTemplate.opsForSet().remove(key, Local.getUser().getUserId().toString());
+            redisTemplate.opsForSet().remove(key, userId.toString());
             update().eq("article_id", articleId).setSql("article_likes = article_likes - 1").update();
             redisTemplate.delete(RedisConstant.ARTICLE_INFO + articleId);
             return ResultInfo.success("取消点赞成功");
         } else {
             boolean isSuccess = false;
             try {
-                redisTemplate.opsForSet().add(key, Local.getUser().getUserId().toString());
+                redisTemplate.opsForSet().add(key, userId.toString());
                 isSuccess = update().eq("article_id", articleId).setSql("article_likes = article_likes + 1").update();
                 redisTemplate.delete(RedisConstant.ARTICLE_INFO + articleId);
+                // 异步保存消息
+                asySaveMsg(article, user, 3);
             } catch (Exception e) {
                 log.error("点赞失败", e);
             }
             return isSuccess ? ResultInfo.success("点赞成功") : ResultInfo.fail("点赞失败");
         }
 
+    }
+
+    /**
+     * type:0-发表文章 1-评论文章 2-收藏文章 3-点赞文章
+     *
+     * @param article
+     * @param user
+     * @param type
+     */
+    private void asySaveMsg(Article article, UserDto user, Integer type) {
+        asyncExecutor.execute(() -> {
+            // 遍历添加到收件箱中
+            Long msgId = idUtil.nextId("msg");
+            Long receiverId = article.getUserId();
+            String msgTitle = "";
+            switch (type) {
+                case 0 -> msgTitle = messageUtil.getArticleMessage("", article.getArticleTitle());
+                case 1 -> msgTitle = messageUtil.getCommentMessage("", article.getArticleTitle());
+                case 2 -> msgTitle = messageUtil.getCollectMessage("", article.getArticleTitle());
+                case 3 -> msgTitle = messageUtil.getLikeMessage("", article.getArticleTitle());
+            }
+
+            MsgType m;
+            if (type == 0) {
+                m = MsgType.PUBLISH_ARTICLE;
+            } else if (type == 1) {
+                m = MsgType.COMMENT_ARTICLE;
+            } else if (type == 2) {
+                m = MsgType.COLLECT_ARTICLE;
+            }
+            {
+                m = MsgType.LIKE_ARTICLE;
+            }
+
+            Message message = new Message(msgId, user.getUserId(), receiverId, msgTitle, article.getArticleId().toString());
+            boolean isSaved = messageService.save(message);
+            if (!isSaved) {
+                log.error("消息保存失败:{}", msgId);
+            }
+            redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + receiverId, msgId + "", System.currentTimeMillis());
+        });
     }
 
 }
