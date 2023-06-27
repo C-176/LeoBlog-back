@@ -1,9 +1,7 @@
 # LeoBlog-Back
 
-
 ![](https://img.shields.io/badge/LICENSE-Apache2.0-green.svg)
 [![](https://img.shields.io/badge/BLOG-@LeoBlog-red.svg)](http://www.leoblog.icu)
-
 
 ## 介绍
 
@@ -44,18 +42,11 @@ Boot框架开发，前端使用Vue.js编写。
 
 后端项目即在本地 **8080** 端口（默认）运行起来了，接下来您可以使用前端项目进行交互。
 
-[//]: # (## 查看接口文档)
-
-[//]: # ()
-[//]: # (您可以通过Swagger查看该项目的接口文档。在运行项目后，访问以下链接即可：)
-
-[//]: # ()
-[//]: # (http://localhost:8080/swagger-ui.html)
-
 ## 贡献
 
 如果您发现了任何问题或想要改进该项目，请随时提出问题或发送拉取请求。我们非常欢迎您的贡献！
-许可证
+
+## 许可证
 
 该项目采用 Apache.2.0 许可证 进行许可。详情请参阅 LICENSE 文件。
 
@@ -67,3 +58,6 @@ Redis：开源的内存数据结构存储，用于缓存和消息队列。
 Swagger：API文档化工具。
 鱼聪明AI：程序员鱼皮所在公司推出的智能AI助手，为用户提供自主问答功能。
 
+## 开发过程中碰到的问题
+
+###
