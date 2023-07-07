@@ -12,6 +12,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -110,6 +111,7 @@ public class UserController {
     }
 
     // 关注
+
     @GetMapping("/follow/{followId}")
     public ResultInfo followUser(@PathVariable("followId") Long followId) {
         return userService.followUser(followId);

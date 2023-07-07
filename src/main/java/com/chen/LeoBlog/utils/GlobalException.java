@@ -31,8 +31,7 @@ public class GlobalException implements HandlerExceptionResolver {
         mav.addObject("code", 400);
         mav.addObject("msg", "系统异常，请稍后访问...");
         //判断ResponseBody
-        if (handler instanceof HandlerMethod) {
-            HandlerMethod handlerMethod = (HandlerMethod) handler;
+        if (handler instanceof HandlerMethod handlerMethod) {
             ResponseBody responseBody = handlerMethod.getMethod().getDeclaredAnnotation(ResponseBody.class);
             //判断
             if (responseBody == null) {

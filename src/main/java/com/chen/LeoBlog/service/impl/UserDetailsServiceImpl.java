@@ -1,9 +1,9 @@
 package com.chen.LeoBlog.service.impl;
 
+import com.chen.LeoBlog.mapper.UserMapper;
 import com.chen.LeoBlog.po.LoginUser;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
-import lombok.SneakyThrows;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Set;
 
 @Service
 /**
@@ -20,6 +21,9 @@ import java.util.List;
 public class UserDetailsServiceImpl implements UserDetailsService {
     @Resource
     private UserService userService;
+
+    @Resource
+    private UserMapper userMapper;
 
 
     @Override
@@ -32,9 +36,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
 
         //TODO:查询用户的权限信息
-        List<String> perssions = List.of("admin");
+        Set<String> permissions = userMapper.getPermissions(user.getUserId());
         // 返回UserDetails的实现类
-        return new LoginUser(user, perssions);
+        return new LoginUser(user, permissions);
 
     }
 }

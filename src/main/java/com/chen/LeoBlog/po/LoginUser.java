@@ -24,11 +24,11 @@ public class LoginUser implements UserDetails, Serializable {
     private static final long serialVersionUID = 144441L;
 
     private User user;
-    private List<String> permissions;
+    private Collection<String> permissions;
     private transient volatile List<GrantedAuthority> authorities;
 
 
-    public LoginUser(User user, List<String> permissions) {
+    public LoginUser(User user, Collection<String> permissions) {
         this.user = user;
         this.permissions = permissions;
     }

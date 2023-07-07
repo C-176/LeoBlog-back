@@ -82,8 +82,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 new UsernamePasswordAuthenticationToken(userDO.getUserName(), userDO.getUserPassword());
 
 
-        Authentication authenticate = authenticationManager.authenticate(authenticationToken);
-        if (authenticate == null) {
+        Authentication authenticate;
+        try {
+            authenticate = authenticationManager.authenticate(authenticationToken);
+        } catch (Exception e) {
             return ResultInfo.fail("用户名或密码错误");
         }
         LoginUser loginUser = (LoginUser) authenticate.getPrincipal();

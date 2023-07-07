@@ -31,4 +31,13 @@
         user_education,user_industry,user_register_date,
         user_bg_pic
     </sql>
+    <select id="getPermissions" resultType="java.lang.String">
+        SELECT p.action_key
+        FROM lb_user_role ur
+                 JOIN lb_role_permission rp ON ur.role_id = rp.role_id
+                 JOIN lb_permission p ON rp.permission_id = p.permission_id
+        WHERE ur.user_id = #{userId};
+
+    </select>
+
 </mapper>

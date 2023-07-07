@@ -60,7 +60,7 @@ logging:
   #项目日志路径
   level:
       com.chen.LeoBlog.dao: debug
-      com.chen.LeoBlog: info
+      com.chen.LeoBlog: debug
   config: D:\Javacode\LeoBlog-back\src\main\resources\logback-config.xml
 
 

@@ -38,14 +38,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Resource
     private SecurityEntryPoint securityEntryPoint;
-    // 暴露
-
 //    // 修改默认的密码加密方式
 //     @Bean
 //     public PasswordEncoder passwordEncoder() {
 //         return new BCryptPasswordEncoder();
 //     }
 
+    // 暴露AuthenticationManager到spring容器中
     @Bean("authenticationManager")
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
@@ -71,7 +70,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 //                .logout().logoutUrl("/logout").logoutSuccessUrl("/login").permitAll();
         http.addFilterBefore(loginFilter, UsernamePasswordAuthenticationFilter.class);
         // 添加验证失败和鉴权失败异常处理器，统一响应格式
-        http.exceptionHandling().authenticationEntryPoint(securityEntryPoint).accessDeniedHandler(securityEntryPoint);
+        http.exceptionHandling()
+                .authenticationEntryPoint(securityEntryPoint)
+                .accessDeniedHandler(securityEntryPoint);
         // 允许跨域
         http.cors();
 
