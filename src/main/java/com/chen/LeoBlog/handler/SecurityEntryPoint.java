@@ -18,7 +18,6 @@ public class SecurityEntryPoint implements AuthenticationEntryPoint , AccessDeni
     @Override
     public void commence(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AuthenticationException e) throws IOException, ServletException {
         WebUtil.responseMsg(httpServletResponse, HttpStatus.UNAUTHORIZED.value(), "用户认证失败，请重新登录");
-
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.chen.LeoBlog.controller;
 
+import com.chen.LeoBlog.annotation.Anonymous;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.Label;
 import com.chen.LeoBlog.service.LabelService;
@@ -17,10 +18,12 @@ public class LabelController {
     @Resource
     private LabelService labelService;
 
+    @Anonymous
     @GetMapping("/list/article/{articleId}")
     public ResultInfo getLabelList(@PathVariable("articleId") Long articleId){
         return labelService.getLabelList(articleId);
     }
+    @Anonymous
     @GetMapping("/list")
     public ResultInfo getLabelList(){
         return labelService.getLabelList();

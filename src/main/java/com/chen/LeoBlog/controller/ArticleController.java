@@ -1,5 +1,6 @@
 package com.chen.LeoBlog.controller;
 
+import com.chen.LeoBlog.annotation.Anonymous;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.service.ArticleService;
 import io.swagger.annotations.ApiOperation;
@@ -20,13 +21,13 @@ public class ArticleController {
     @Resource
     private ArticleService articleService;
 
-    @ApiOperation("获取文章列表")
+    @Anonymous
     @GetMapping("/list/{page}/{size}")
     public ResultInfo getArticleList(@PathVariable("page") Integer page, @PathVariable("size") Integer size) {
         return articleService.getArticleList(page, size);
     }
 
-    @ApiOperation("根据文章id获取文章")
+    @Anonymous
     @GetMapping("/{articleId}")
     public ResultInfo getArticle(@PathVariable("articleId") Long articleId) {
         return articleService.getArticle(articleId);
@@ -67,35 +68,40 @@ public class ArticleController {
 
     //查询关注列表中的新发文章
     @GetMapping("/follow/{offset}/{lastScore}")
-    public ResultInfo getFollowArticles(@PathVariable("offset") int offset,@PathVariable("lastScore") Long lastScore) {
-        return articleService.getFollowArticles(offset,lastScore);
+    public ResultInfo getFollowArticles(@PathVariable("offset") int offset, @PathVariable("lastScore") Long lastScore) {
+        return articleService.getFollowArticles(offset, lastScore);
     }
 
-    //根据分类id获取文章列表
-    @GetMapping("/list/sort/{sortId}")
-    public ResultInfo getArticleListBySortId(@PathVariable("sortId") Long sortId) {
-        return articleService.getArticleListBySortId(sortId);
-    }
-
-    //根据分类id获取文章数
+    @Anonymous
     @GetMapping("/sum/sort/{sortId}")
     public ResultInfo getArticleSumBySortId(@PathVariable("sortId") Long sortId) {
         return articleService.getArticleSumBySortId(sortId);
     }
+    //根据分类id获取文章列表
+
+    @Anonymous
+    @GetMapping("/list/sort/{sortId}")
+    public ResultInfo getArticleListBySortId(@PathVariable("sortId") Long sortId) {
+        return articleService.getArticleListBySortId(sortId);
+    }
+    //根据分类id获取文章数
 
     //根据标签id获取文章列表
-    @PostMapping("/list/label/{labelId}/{page}/{size}")
+
+    @GetMapping("/list/label/{labelId}/{page}/{size}")
     public ResultInfo getArticleListByLabelId(@PathVariable("labelId") Long labelId, @RequestBody Map<String, Object> map, @PathVariable("page") Integer page, @PathVariable("size") Integer size) {
         return articleService.getArticleListByLabelId(labelId, map, page, size);
     }
 
     //根据标签id获取文章数
+    @Anonymous
     @GetMapping("/sum/label/{labelId}")
     public ResultInfo getArticleSumByLabelId(@PathVariable("labelId") Long labelId) {
         return articleService.getArticleSumByLabelId(labelId);
     }
 
     //根据关键字获取文章列表
+    @Anonymous
     @GetMapping("/list/keyword/{keyword}/{page}/{size}")
     public ResultInfo getArticleListByKeyword(@PathVariable("keyword") String keyword, @PathVariable("page") Integer page, @PathVariable("size") Integer size) {
         log.info("keyword:{}", keyword);
@@ -103,6 +109,7 @@ public class ArticleController {
     }
 
     //根据内容获取文章列表
+    @Anonymous
     @GetMapping("/list/content/{content}/{page}/{size}")
     public ResultInfo getArticleListByContent(@PathVariable("content") String content, @PathVariable("page") Integer page, @PathVariable("size") Integer size) {
         log.info("content:{}", content);

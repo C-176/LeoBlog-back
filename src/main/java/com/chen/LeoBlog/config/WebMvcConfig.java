@@ -1,5 +1,6 @@
 package com.chen.LeoBlog.config;
 
+import com.chen.LeoBlog.annotation.Anonymous;
 import com.chen.LeoBlog.interceptors.NoLoginInterceptor;
 import com.chen.LeoBlog.interceptors.RefreshTTLInterceptor;
 import lombok.extern.slf4j.Slf4j;
@@ -7,10 +8,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.mvc.condition.PatternsRequestCondition;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+
+import java.util.Map;
+import java.util.Set;
 
 @Configuration
 @Slf4j
@@ -20,6 +29,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
 
     // 静态资源映射
     @Override
@@ -38,15 +48,20 @@ public class WebMvcConfig implements WebMvcConfigurer {
     //拦截器
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        /**
+         * excludePathPatterns 方法接受一个或多个 Ant 样式路径表达式，用于匹配需要放行的请求路径。Ant 样式路径表达式是一种通配符，用于匹配多个路径。其中，* 表示匹配任意数量的字符，** 表示匹配任意数量的路径，? 表示匹配任意一个字符，{} 表示匹配一组选择项。
+         * 以下是一些示例，展示了如何使用 Ant 样式路径表达式来配置 excludePathPatterns：
+         * excludePathPatterns("/api/user/**") 表示放行以 /api/user/ 开头的任意请求路径，包括 "/api/user/123"、"/api/user/login"、"/api/user/info/123" 等。
+         * excludePathPatterns("/api/user/{id}") 表示放行形如 /api/user/{id} 的请求路径，其中 {id} 表示一个变量，可以匹配任意字符串。
+         * excludePathPatterns("/api/user/{id:[0-9]+}") 表示放行形如 /api/user/{id} 的请求路径，其中 {id:[0-9]+} 表示一个变量，只能匹配数字。
+         */
         registry.addInterceptor(new RefreshTTLInterceptor(redisTemplate)).addPathPatterns("/**");
         registry.addInterceptor(new NoLoginInterceptor(redisTemplate)).addPathPatterns("/**")
 
-                .excludePathPatterns("/source/**", "/upload/**", "/article/*", "/comment/*",
-                        "/article/list/*/*", "/comment/list/*/*", "/badge/*",
-                        "/user/login", "/user/register", "/user/confirm/**",
-                        "/user/getCaptcha", "/user/changePwd","/user/\\d+"
-
-                );
+                .excludePathPatterns("/source/**",
+                        "/comment/*",
+                        "/article/list/*/*", "/comment/list/*/*", "/badge/*"
+                        );
     }
 
     //    CORS跨域配置

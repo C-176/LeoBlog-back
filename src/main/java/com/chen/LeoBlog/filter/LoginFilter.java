@@ -37,10 +37,9 @@ public class LoginFilter extends OncePerRequestFilter {
         // 解析token
         try {
             claimsJws = JWTUtil.parseJwt(token);
-//            if (!JWTUtil.verifyJwtSignature(token)) throw new RuntimeException("token非法");
+            if (!JWTUtil.verifyJwtSignature(token)) throw new RuntimeException("token过期,请重新登录");
         } catch (Exception e) {
-            logger.error(e);
-            throw new RuntimeException("token非法");
+            throw new RuntimeException("token过期,请重新登录");
         }
         String userId = claimsJws.getBody().getSubject();
 
