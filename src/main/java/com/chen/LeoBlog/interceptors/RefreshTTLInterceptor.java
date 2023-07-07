@@ -5,17 +5,14 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.constant.RedisConstant;
-import com.chen.LeoBlog.dto.UserDto;
+import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.po.User;
-import com.chen.LeoBlog.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 
@@ -51,7 +48,7 @@ public class RefreshTTLInterceptor implements HandlerInterceptor {
         }
 
         user = JSONUtil.toBean(user.toString(), User.class);
-        UserDto userDto = new UserDto();
+        UserDTO userDto = new UserDTO();
         BeanUtil.copyProperties(user, userDto);
         if (Local.getUser() == null) {
             Local.saveUser(userDto);

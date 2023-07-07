@@ -3,6 +3,7 @@ package com.chen.LeoBlog.controller;
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
 import cn.hutool.core.util.StrUtil;
+import com.chen.LeoBlog.Do.UserDO;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
@@ -29,8 +30,8 @@ public class UserController {
     private LineCaptcha lineCaptcha;
 
     @PostMapping("/login")
-    public ResultInfo login(@RequestBody Map<String, Object> map, @RequestHeader(value = "Authorization", defaultValue = "", required = false) String token) {
-        return userService.login(map, token);
+    public ResultInfo login(@RequestBody UserDO user) {
+        return userService.login(user);
     }
 
     @PostMapping("/register")
@@ -126,6 +127,11 @@ public class UserController {
     @GetMapping("/commonFollow/{userId}")
     public ResultInfo getCommonFollow(@PathVariable("userId") Long userId){
         return userService.getCommonFollow(userId);
+    }
+
+    @GetMapping("/logout")
+    public ResultInfo logout(){
+        return userService.logout();
     }
 
 

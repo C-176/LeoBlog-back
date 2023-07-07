@@ -63,7 +63,7 @@ public class ChatRecordServiceImpl extends ServiceImpl<ChatRecordMapper, ChatRec
 
     @Override
     public ResultInfo getRecordList(Long userId, Long talkToId, Integer page, Integer size) {
-        log.info("获取聊天记录列表,page:{},size:{}", page, size);
+        log.debug("获取聊天记录列表,page:{},size:{}", page, size);
         try {
             Page<ChatRecord> pageObj = new Page<>(page, size);
             if (talkToId == -1) {

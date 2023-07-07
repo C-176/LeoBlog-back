@@ -40,8 +40,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new RefreshTTLInterceptor(redisTemplate)).addPathPatterns("/**");
         registry.addInterceptor(new NoLoginInterceptor(redisTemplate)).addPathPatterns("/**")
-                .excludePathPatterns("/user/**", "/source/**", "/upload/**","/article/*","/comment/*",
-                        "/article/list/*/*","/comment/list/*/*","/badge/*");
+
+                .excludePathPatterns("/source/**", "/upload/**", "/article/*", "/comment/*",
+                        "/article/list/*/*", "/comment/list/*/*", "/badge/*",
+                        "/user/login", "/user/register", "/user/confirm/**",
+                        "/user/getCaptcha", "/user/changePwd","/user/\\d+"
+
+                );
     }
 
     //    CORS跨域配置
@@ -49,10 +54,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")   // 允许跨域访问的路径
                 .allowedOriginPatterns("*")  // 允许跨域访问的源
-                .allowedMethods("*")  // 允许请求方法
+                .allowedMethods("GET", "POST", "DELETE", "PUT")  // 允许请求方法
                 .maxAge(666000)  // 预检间隔时间
-                .allowedHeaders("*");  // 允许头部设置
-//                .allowCredentials(true); // 是否允许发送cookie
+                .allowedHeaders("*")  // 允许头部设置
+                .allowCredentials(true); // 是否允许发送cookie
         log.info("CORS配置成功");
     }
 }

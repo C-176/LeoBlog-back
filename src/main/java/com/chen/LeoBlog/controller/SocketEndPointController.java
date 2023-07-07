@@ -86,7 +86,7 @@ public class SocketEndPointController {
 
     @OnOpen
     public void onOpen(@PathParam("userId") Long userId, Session session) {
-        log.info("新连接->userId:{},session:{}", userId, session);
+        log.debug("新连接->userId:{},session:{}", userId, session);
         SocketPool.add(userId, session); // 添加到在线用户列表
         // 添加到redis在线用户中
         socketEndpoint.redisTemplate.opsForZSet().add(key, userId.toString(), new Date().getTime());
@@ -114,7 +114,7 @@ public class SocketEndPointController {
 
     @OnMessage
     public void onMessage(@RequestBody String jsonStr) {
-        log.info("收到客户端消息:{}", jsonStr);
+        log.debug("收到客户端消息:{}", jsonStr);
         ChatRecord record = JSONUtil.toBean(jsonStr, ChatRecord.class);
         Long userId = record.getUserId();
         Long receiverId = record.getReceiverId();
@@ -189,7 +189,7 @@ public class SocketEndPointController {
     @OnClose
     public void onClose(@PathParam("userId") Long userId) {
 
-        log.info("连接关闭->userId: {}", userId);
+        log.debug("连接关闭->userId: {}", userId);
         SocketPool.remove(userId);
         socketEndpoint.redisTemplate.opsForZSet().remove(key, userId.toString());
         Map<Long, Session> sessionMap = getSessionMap();

@@ -26,21 +26,21 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-<!--        tomcat-->
+        <!--        tomcat-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-tomcat</artifactId>
             <scope>compile</scope>
         </dependency>
 
-<!--        mysql-->
+        <!--        mysql-->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>8.0.25</version>
             <scope>runtime</scope>
         </dependency>
-<!--        redisson-->
+        <!--        redisson-->
         <dependency>
             <groupId>org.redisson</groupId>
             <artifactId>redisson</artifactId>
@@ -52,13 +52,13 @@
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <version>2.2.2</version>
         </dependency>
-<!--pagehelper-->
+        <!--pagehelper-->
         <dependency>
             <groupId>com.github.pagehelper</groupId>
             <artifactId>pagehelper-spring-boot-starter</artifactId>
             <version>1.4.2</version>
         </dependency>
-<!--        c3p0-->
+        <!--        c3p0-->
         <dependency>
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
@@ -74,7 +74,7 @@
             <artifactId>javax.mail</artifactId>
             <version>1.6.2</version>
         </dependency>
-<!--        javamail-->
+        <!--        javamail-->
         <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>javax.mail-api</artifactId>
@@ -112,7 +112,7 @@
             <artifactId>yitter-idgenerator</artifactId>
             <version>1.0.6</version>
         </dependency>
-<!--        hutool-->
+        <!--        hutool-->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
@@ -165,11 +165,34 @@
             <version>2.3.30</version>
         </dependency>
 
-<!--        // 鱼皮AI-->
+        <!--        // 鱼皮AI-->
         <dependency>
             <groupId>com.yucongming</groupId>
             <artifactId>yucongming-java-sdk</artifactId>
             <version>0.0.2</version>
+        </dependency>
+        <!--spring security-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <!--        jwt-->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.2</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.2</version>
+            <scope>runtime</scope>
         </dependency>
 
     </dependencies>
@@ -183,7 +206,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <fork>true</fork>
-<!--                    为了使热部署生效，需要设置为true-->
+                    <!--                    为了使热部署生效，需要设置为true-->
                 </configuration>
             </plugin>
         </plugins>

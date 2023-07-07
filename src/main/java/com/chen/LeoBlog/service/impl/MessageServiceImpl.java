@@ -2,15 +2,13 @@ package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
-import com.chen.LeoBlog.dto.UserDto;
+import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.mapper.MessageMapper;
-import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.po.Message;
 import com.chen.LeoBlog.service.MessageService;
 import com.chen.LeoBlog.utils.BaseUtil;
@@ -96,7 +94,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
 
     @Override
     public ResultInfo getMsgFromBox(Integer offset, Long lastScore) {
-        UserDto user = BaseUtil.getUserFromLocal();
+        UserDTO user = BaseUtil.getUserFromLocal();
         int count = 10;
         String messageBox = RedisConstant.MESSAGE_BOX_PREFIX + user.getUserId();
         // 取出所有的文章id
