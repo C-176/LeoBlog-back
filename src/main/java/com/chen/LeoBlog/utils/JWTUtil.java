@@ -33,6 +33,12 @@ public class JWTUtil {
         return claimsJws;
     }
 
+    // 解析 JWT中的userId
+    public static Long parseJwtUserId(String jwt) {
+        Jws<Claims> claimsJws = parseJwt(jwt);
+        return Long.parseLong(claimsJws.getBody().getSubject());
+    }
+
     // 验证 JWT 签名
     public static boolean verifyJwtSignature(String jwt) {
         try {

@@ -47,4 +47,6 @@ public class UserDTO {
     private String userIndustry;
     private String userBgPic;
     private Date userRegisterDate;
+
+    private String IP;
 }

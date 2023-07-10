@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
-public class SecurityEntryPoint implements AuthenticationEntryPoint , AccessDeniedHandler {
+public class SecurityExceptionHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
     @Override
     public void commence(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AuthenticationException e) throws IOException, ServletException {
         WebUtil.responseMsg(httpServletResponse, HttpStatus.UNAUTHORIZED.value(), "用户认证失败，请重新登录");
