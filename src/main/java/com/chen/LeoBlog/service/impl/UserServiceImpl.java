@@ -9,14 +9,12 @@ import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.CodeSender;
-import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDto;
 import com.chen.LeoBlog.mapper.UserMapper;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
-import com.chen.LeoBlog.utils.AssertUtil;
 import com.chen.LeoBlog.utils.IdUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +24,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -418,7 +419,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 log.error("更新用户信息失败:->{}", user.getUserId(), e);
                 return ResultInfo.fail("更新失败");
             } finally {
-                if (lock != null) redisUtil.releaseLock(lock, lockKey);
+                if (lock != null) redisUtil.releaseLock(lock);
             }
         }
         return ResultInfo.success();

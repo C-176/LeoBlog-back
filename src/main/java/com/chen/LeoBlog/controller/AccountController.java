@@ -3,23 +3,27 @@ package com.chen.LeoBlog.controller;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.Account;
 import com.chen.LeoBlog.service.AccountService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Map;
 
 @RestController
 @Slf4j
 @RequestMapping("/account")
+@Api("账户管理")
 public class AccountController {
     @Resource
     private AccountService accountService;
 
-
+    @ApiOperation("根据用户id获取账户信息")
     @GetMapping("/{userId}")
-    public ResultInfo getAccountByUserId(@PathVariable Long userId) {
+    public ResultInfo getAccountByUserId(
+            @ApiParam(name = "userId", value = "用户id", required = true)
+            @PathVariable Long userId) {
         return accountService.getAccountByUserId(userId);
     }
 
