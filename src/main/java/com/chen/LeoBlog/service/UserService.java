@@ -1,6 +1,7 @@
 package com.chen.LeoBlog.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.chen.LeoBlog.Do.UserDO;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.User;
 
@@ -13,7 +14,7 @@ import java.util.Map;
  */
 public interface UserService extends IService<User> {
 
-    ResultInfo login(Map<String, Object> map, String token);
+    ResultInfo login(UserDO user);
 
     ResultInfo register(Map<String, Object> map);
 
@@ -48,4 +49,6 @@ public interface UserService extends IService<User> {
     ResultInfo unfollowUser(Long followId);
 
     User getUserObj(Long userId);
+
+    ResultInfo logout();
 }

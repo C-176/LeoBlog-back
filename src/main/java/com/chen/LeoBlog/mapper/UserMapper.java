@@ -3,6 +3,9 @@ package com.chen.LeoBlog.mapper;
 import com.chen.LeoBlog.po.User;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import java.util.List;
+import java.util.Set;
+
 /**
 * @author 1
 * @description 针对表【lb_user】的数据库操作Mapper
@@ -11,6 +14,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface UserMapper extends BaseMapper<User> {
 
+    Set<String> getPermissions(Long userId);
 }
 
 

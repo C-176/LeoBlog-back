@@ -8,19 +8,26 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.chen.LeoBlog.Do.UserDO;
 import com.chen.LeoBlog.base.CodeSender;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
-import com.chen.LeoBlog.dto.UserDto;
+import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.mapper.UserMapper;
+import com.chen.LeoBlog.po.LoginUser;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
 import com.chen.LeoBlog.utils.IdUtil;
+import com.chen.LeoBlog.utils.JWTUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -55,54 +62,67 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private RedisUtil redisUtil;
     @Resource
     private IdUtil idUtil;
+    @Resource
+    private AuthenticationManager authenticationManager;
 
     @Override
-    public ResultInfo login(Map<String, Object> map, String token) {
-        if (token == null || StrUtil.isEmpty(token)) {
-            token = getToken();
-        }
+    public ResultInfo login(UserDO userDO) {
         //从map中取出用户名和密码，验证码，手机号，邮箱
-        String username = (String) map.get("userName");
-        String password = (String) map.get("userPassword");
-        String captcha = (String) map.get("captcha");
-        String phone = (String) map.getOrDefault("userPhone", null);
-        String email = (String) map.getOrDefault("userEmail", null);
-        if (StrUtil.isBlank(captcha)) {
-            return ResultInfo.fail("验证码不可为空");
-        }
-        if (!lineCaptcha.verify(captcha)) return ResultInfo.fail("验证码错误");
+        String username = userDO.getUserName();
+        String password = userDO.getUserPassword();
+        String captcha = userDO.getCaptcha();
+        String phone = userDO.getUserPhone();
+        String email = userDO.getUserEmail();
+
+//        if (StrUtil.isBlank(captcha)) {
+//            return ResultInfo.fail("验证码不可为空");
+//        }
+//        if (!lineCaptcha.verify(captcha)) return ResultInfo.fail("验证码错误");
 
         //判断用户名和密码是否为空
         if (StrUtil.isBlank(password)) return ResultInfo.fail("密码不能为空");
-        User user;
-        if (StrUtil.isBlank(username) && StrUtil.isBlank(email)) {
-            if (StrUtil.isBlank(phone)) return ResultInfo.fail("手机号、用户名、邮箱不能同时为空");
-            log.info("手机号登录[{}]", phone);
-            user = query().eq("user_phone", phone).one();
-            if (user == null) {
-                return ResultInfo.fail("手机号尚未注册");
-            }
-        } else {
-            if (StrUtil.isNotBlank(username)) {
-                log.info("用户名登录[{}]", username);
-                user = query().eq("user_name", username).one();
-                if (user == null) return ResultInfo.fail("用户名不存在");
-            } else {
-                log.info("邮箱登录[{}]", email);
-                user = query().eq("user_email", email).one();
-                if (user == null) {
-                    return ResultInfo.fail("该邮箱尚未注册");
-                }
-            }
-            if (!StrUtil.equals(user.getUserPassword(), password)) {
-                log.info("密码[{}]错误", password);
-                return ResultInfo.fail("密码错误");
-            }
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(userDO.getUserName(), userDO.getUserPassword());
+
+
+        Authentication authenticate;
+        try {
+            authenticate = authenticationManager.authenticate(authenticationToken);
+        } catch (Exception e) {
+            return ResultInfo.fail("用户名或密码错误");
         }
-        UserDto userDto = new UserDto();
+        LoginUser loginUser = (LoginUser) authenticate.getPrincipal();
+        User user = loginUser.getUser();
+//        User user;
+//        if (StrUtil.isBlank(username) && StrUtil.isBlank(email)) {
+//            if (StrUtil.isBlank(phone)) return ResultInfo.fail("手机号、用户名、邮箱不能同时为空");
+//            log.debug("手机号登录[{}]", phone);
+//            user = query().eq("user_phone", phone).one();
+//            if (user == null) {
+//                return ResultInfo.fail("手机号尚未注册");
+//            }
+//        } else {
+//            if (StrUtil.isNotBlank(username)) {
+//                log.debug("用户名登录[{}]", username);
+//                user = query().eq("user_name", username).one();
+//                if (user == null) return ResultInfo.fail("用户名不存在");
+//            } else {
+//                log.debug("邮箱登录[{}]", email);
+//                user = query().eq("user_email", email).one();
+//                if (user == null) {
+//                    return ResultInfo.fail("该邮箱尚未注册");
+//                }
+//            }
+//            if (!StrUtil.equals(user.getUserPassword(), password)) {
+//                log.debug("密码[{}]错误", password);
+//                return ResultInfo.fail("密码错误");
+//            }
+//        }
+        UserDTO userDto = new UserDTO();
         BeanUtil.copyProperties(user, userDto);
-        redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN + token, JSONUtil.toJsonStr(userDto), RedisConstant.USER_LOGIN_TTL, TimeUnit.DAYS);
-        log.info("登陆成功:token: {}", token);
+        String token = JWTUtil.generateJwt(userDto.getUserId().toString(), 0);
+        redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN + user.getUserId(), JSONUtil.toJsonStr(loginUser), JWTUtil.EXPIRATION_TIME, TimeUnit.MILLISECONDS);
+        log.debug("登陆成功:token: {}", token);
         return ResultInfo.success(Map.of("token", token, "user", userDto));
     }
 
@@ -128,9 +148,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         if (StrUtil.isBlank(email)) {
             if (StrUtil.isBlank(phone)) return ResultInfo.fail("手机号、邮箱不能同时为空");
-            log.info("手机号注册[{}]", phone);
+            log.debug("手机号注册[{}]", phone);
         } else {
-            log.info("邮箱注册[{}]", email);
+            log.debug("邮箱注册[{}]", email);
         }
 
         User user = new User();
@@ -144,7 +164,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         boolean isSuccess = save(user);
         if (!isSuccess) return ResultInfo.fail("注册失败,请稍后再试");
         String token = getToken();
-        log.info("注册成功:token:{}", token);
+        log.debug("注册成功:token:{}", token);
         return ResultInfo.success(Map.of("token", token));
     }
 
@@ -154,7 +174,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //TODO:向手机号发送验证码
         try {
             MailUtil.send("rtg1999@163.com", "手机验证码测试", "邮件来自LeoBlog\n" + captcha, false);
-            log.info("手机验证码发送成功[{}]->[{}]", phone, captcha);
+            log.debug("手机验证码发送成功[{}]->[{}]", phone, captcha);
         } catch (Exception e) {
             log.error("发送手机验证码失败:->{}", phone, e);
         }
@@ -167,7 +187,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //向邮箱发送验证码
         try {
             MailUtil.send(email, "LeoBlog邮箱验证信息", htmlPrefix + "验证身份" + htmlMiddle + captcha + htmlSuffix, true);
-            log.info("邮箱验证码发送成功[{}]->[{}]", email, captcha);
+            log.debug("邮箱验证码发送成功[{}]->[{}]", email, captcha);
         } catch (Exception e) {
             log.error("发送邮件验证码失败:->{}", email, e);
         }
@@ -178,7 +198,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public ResultInfo getNameByIds(String id) {
         List<User> ids = query().in("user_id", id).list();
-        log.info("ids:{}", ids);
+        log.debug("ids:{}", ids);
         List<User> users = query().in("user_id", ids).last("order by field(user_id," + ids + ")").list();
         //取出每个user的名字，转化为list
         List<Object> names = users.stream().map(User::getUserNickname).collect(Collectors.toList());
@@ -188,9 +208,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public ResultInfo getSecurityUser(Long userId) {
-        UserDto userDtoObj = getUserDtoObj(userId);
-        if (userDtoObj == null) return ResultInfo.fail("用户不存在");
-        return ResultInfo.success(userDtoObj);
+        UserDTO userDTOObj = getUserDtoObj(userId);
+        if (userDTOObj == null) return ResultInfo.fail("用户不存在");
+        return ResultInfo.success(userDTOObj);
     }
 
     @Override
@@ -205,10 +225,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 User.class, RedisConstant.USER_INFO_TTL, TimeUnit.DAYS, (uid) -> query().eq("user_id", uid).one());
     }
 
-    public UserDto getUserDtoObj(Long userId) {
+    @Override
+    public ResultInfo logout() {
+        // 获取securityContextHolder中的token
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+        Long userId = loginUser.getUser().getUserId();
+        String key = RedisConstant.USER_LOGIN + userId;
+        // 删除redis中的token
+        redisTemplate.delete(key);
+        return ResultInfo.success();
+    }
+
+    public UserDTO getUserDtoObj(Long userId) {
         User user = getUserObj(userId);
         if (user == null) return null;
-        UserDto userDto = new UserDto();
+        UserDTO userDto = new UserDTO();
         BeanUtil.copyProperties(user, userDto);
         return userDto;
     }
@@ -236,7 +268,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             }
 
         } else if (StrUtil.isNotBlank(userEmail) && StrUtil.isBlank(userPassword) && StrUtil.isBlank(userPhone)) {
-            log.info("验证码：{},传入：{}", CodeSender.getCode(), captcha);
+            log.debug("验证码：{},传入：{}", CodeSender.getCode(), captcha);
             boolean isCorrect = CodeSender.confirmCode(captcha);
             if (!isCorrect) return ResultInfo.fail("验证码错误");
             //更新邮箱
@@ -251,7 +283,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 return ResultInfo.fail("更新邮箱失败");
             }
         } else if (StrUtil.isNotBlank(userPhone) && StrUtil.isBlank(userPassword) && StrUtil.isBlank(userEmail)) {
-            log.info("验证码：{},传入：{}", CodeSender.getCode(), captcha);
+            log.debug("验证码：{},传入：{}", CodeSender.getCode(), captcha);
             boolean isCorrect = CodeSender.confirmCode(captcha);
             if (!isCorrect) return ResultInfo.fail("验证码错误");
             //更新手机号
@@ -298,7 +330,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public ResultInfo followUser(Long followId) {
-        UserDto user = getUserFromLocal();
+        UserDTO user = getUserFromLocal();
         Long userId = user.getUserId();
         if (userId.equals(followId)) return ResultInfo.fail("不能关注自己");
         // 查询是否已经关注
@@ -318,7 +350,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public ResultInfo unfollowUser(Long followId) {
-        UserDto user = getUserFromLocal();
+        UserDTO user = getUserFromLocal();
         Long userId = user.getUserId();
         if (userId.equals(followId)) return ResultInfo.fail("不能取关自己");
         // 查询是否已经关注
@@ -340,7 +372,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public ResultInfo getFollowStatus(Long followId) {
 
-        UserDto user = getUserFromLocal();
+        UserDTO user = getUserFromLocal();
         String followKey = RedisConstant.FOLLOW_USER_LIST + user.getUserId();
         Boolean isMember = redisTemplate.opsForSet().isMember(followKey, followId.toString());
         return ResultInfo.success(isMember);
@@ -348,7 +380,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public ResultInfo getCommonFollow(Long userId) {
-        UserDto user = getUserFromLocal();
+        UserDTO user = getUserFromLocal();
         String followKey1 = RedisConstant.FOLLOW_USER_LIST + user.getUserId();
         String followKey2 = RedisConstant.FOLLOW_USER_LIST + userId;
         Set<String> intersect = redisTemplate.opsForSet().intersect(followKey1, followKey2);
@@ -357,7 +389,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public ResultInfo getFans() {
-        UserDto user = getUserFromLocal();
+        UserDTO user = getUserFromLocal();
         String fansKey = RedisConstant.FAN_USER_LIST + user.getUserId();
         Set<String> members = redisTemplate.opsForSet().members(fansKey);
         return ResultInfo.success(members);
@@ -365,7 +397,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public ResultInfo getFollowed() {
-        UserDto user = getUserFromLocal();
+        UserDTO user = getUserFromLocal();
         String followKey = RedisConstant.FOLLOW_USER_LIST + user.getUserId();
         Set<String> members = redisTemplate.opsForSet().members(followKey);
         return ResultInfo.success(members);
@@ -375,8 +407,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Override
     public ResultInfo deleteUser(Long userId) {
         //TODO:如果是管理员，可以删除用户，否则只能删除自己
-        log.info("删除用户:{}", userId);
-        UserDto loginedUser = getUserFromLocal();
+        log.debug("删除用户:{}", userId);
+        UserDTO loginedUser = getUserFromLocal();
         if (!loginedUser.getUserId().equals(userId)) {
             return ResultInfo.fail("无权操作");
         }
@@ -450,11 +482,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return UUID.randomUUID(true).toString(true);
     }
 
-    private void login2redis(String token, User user) {
-        UserDto userDto = new UserDto();
-        BeanUtil.copyProperties(user, userDto);
-        redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN + token, JSONUtil.toJsonStr(userDto), RedisConstant.USER_LOGIN_TTL, TimeUnit.DAYS);
-    }
 
 
 }

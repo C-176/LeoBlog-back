@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.chen.LeoBlog.constant.MDCKey;
 import com.chen.LeoBlog.constant.RedisConstant;
+import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.po.User;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -45,6 +46,7 @@ public class RefreshTTLInterceptor implements HandlerInterceptor {
         } catch (Exception e) {
             log.error("redis异常:[{}]", key, e);
         }
+
 //
         User loginUser = JSONUtil.toBean(user.toString(), User.class);
         // 将用户ID存入MDC
@@ -55,6 +57,7 @@ public class RefreshTTLInterceptor implements HandlerInterceptor {
 //        if (Local.getUser() == null) {
 //            Local.saveUser(userDto);
 //        }
+
 
         return true;
     }

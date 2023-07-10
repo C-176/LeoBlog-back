@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
-import com.chen.LeoBlog.dto.UserDto;
+import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.mapper.BadgeMapper;
 import com.chen.LeoBlog.po.Account;
 import com.chen.LeoBlog.po.Badge;
@@ -145,7 +145,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
     @Override
     @Transactional
     public ResultInfo buyBadge(String badgeId) {
-        UserDto user1 = Local.getUser();
+        UserDTO user1 = Local.getUser();
         String key = RedisConstant.USER_ID_LOCK + user1.getUserId();
         RLock lock = null;
         try {
@@ -162,7 +162,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
             Map<String, Object> data = (Map<String, Object>) isOk.getData();
             Badge badge = (Badge) data.get("badge");
             Account userAccount = (Account) data.get("userAccount");
-            UserDto user = (UserDto) data.get("user");
+            UserDTO user = (UserDTO) data.get("user");
             // 扣除用户余额
             boolean isSuccess = accountService.update().set("user_money", userAccount.getUserMoney() - badge.getBadgeValue()).eq("user_id", user.getUserId()).update();
             if (!isSuccess) {
@@ -184,7 +184,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
 
     private ResultInfo check(Long badgeId, boolean isLimit) {
         // 查询用户信息
-        UserDto user = Local.getUser();
+        UserDTO user = Local.getUser();
         if (user == null) {
             return ResultInfo.fail("用户未登录");
         }
@@ -241,7 +241,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
 
     @Override
     public ResultInfo buyLimitedBadge(String badgeId) {
-        UserDto user1 = Local.getUser();
+        UserDTO user1 = Local.getUser();
         String key = RedisConstant.USER_ID_LOCK + user1.getUserId();
         RLock lock = null;
         try {
@@ -258,7 +258,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
             Map<String, Object> data = (Map<String, Object>) isOk.getData();
             Badge badge = (Badge) data.get("badge");
             Account userAccount = (Account) data.get("userAccount");
-            UserDto user = (UserDto) data.get("user");
+            UserDTO user = (UserDTO) data.get("user");
 
             Boolean hasStockKey = redisTemplate.hasKey(RedisConstant.BADGE_STOCK + badgeId);
             if (Boolean.FALSE.equals(hasStockKey)) {

@@ -9,7 +9,7 @@ import java.io.IOException;
 
 
 @Slf4j
-public class InterceptorUtil {
+public class WebUtil {
 
     public static void responseMsg(HttpServletResponse response, Integer code, String msg) throws IOException {
         response.setStatus(200);

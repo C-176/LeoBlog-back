@@ -11,7 +11,7 @@ import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.base.MsgType;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
-import com.chen.LeoBlog.dto.UserDto;
+import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.mapper.ArticleMapper;
 import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.po.Label;
@@ -32,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -77,11 +76,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public ResultInfo getArticle(Long articleId) {
-        log.info("articleId: [{}]", articleId);
+        log.debug("articleId: [{}]", articleId);
         String key = RedisConstant.ARTICLE_INFO + articleId;
         Article article = redisUtil.getObjWithCache(key, articleId, Article.class, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS, (id) -> query().eq("article_id", id).one());
         if (article == null) {
-            log.info("articleId: [{}] 不存在", articleId);
+            log.debug("articleId: [{}] 不存在", articleId);
             return ResultInfo.fail("该文章不存在");
         }
         User user = (User) userService.getUser(article.getUserId()).getData();
@@ -107,7 +106,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
 
         article.setArticleId(articleId);
-        UserDto user = BaseUtil.getUserFromLocal();
+        UserDTO user = BaseUtil.getUserFromLocal();
         article.setUserId(user.getUserId());
         article.setArticleTitle(map.get("articleTitle").toString());
         article.setArticleContent(map.get("articleContent").toString());
@@ -153,7 +152,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Override
     public ResultInfo deleteArticle(Long articleId) {
         //只有作者才能删除，需要判断
-        UserDto user = Local.getUser();
+        UserDTO user = BaseUtil.getUserFromLocal();
         if (user == null) return ResultInfo.fail("请先登录");
         Article article = query().eq("article_id", articleId).one();
         if (article == null) {
@@ -220,7 +219,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         String key = RedisConstant.ARTICLE_COLLECT + articleId;
         Article article = query().eq("article_id", articleId).one();
         Long receiverId = article.getUserId();
-        UserDto user = BaseUtil.getUserFromLocal();
+        UserDTO user = BaseUtil.getUserFromLocal();
         Long userId = user.getUserId();
         if (userId.equals(receiverId)) {
             return ResultInfo.fail("不能收藏自己的文章");
@@ -255,7 +254,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Override
     public ResultInfo getFollowArticles(int offset, Long lastScore) {
-        UserDto user = BaseUtil.getUserFromLocal();
+        UserDTO user = BaseUtil.getUserFromLocal();
         int count = 10;
         String messageBox = RedisConstant.MESSAGE_BOX_PREFIX + user.getUserId();
         // 取出所有的文章id
@@ -355,7 +354,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         String key = RedisConstant.ARTICLE_LIKE + articleId;
         Article article = query().eq("article_id", articleId).one();
         Long receiverId = article.getUserId();
-        UserDto user = BaseUtil.getUserFromLocal();
+        UserDTO user = BaseUtil.getUserFromLocal();
         Long userId = user.getUserId();
         if (userId.equals(receiverId)) {
             return ResultInfo.fail("不能点赞自己的文章");
@@ -389,7 +388,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * @param user
      * @param type
      */
-    private void asySaveMsg(Article article, UserDto user, Integer type) {
+    private void asySaveMsg(Article article, UserDTO user, Integer type) {
         asyncExecutor.execute(() -> {
             // 遍历添加到收件箱中
             Long msgId = idUtil.nextId("msg");

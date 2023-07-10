@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.MsgType;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
-import com.chen.LeoBlog.dto.UserDto;
+import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.mapper.CommentMapper;
 import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.po.Comment;
@@ -55,14 +55,14 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
      */
     @Override
     public ResultInfo getCommentSumByUserId(Long userId) {
-        log.info("userId: [{}]", userId);
+        log.debug("userId: [{}]", userId);
         Integer sum = query().eq("user_id", userId).eq("comment_parent_id", -1).count();
         return ResultInfo.success(sum);
     }
 
     @Override
     public ResultInfo getComment(Long commentId) {
-        log.info("commentId: [{}]", commentId);
+        log.debug("commentId: [{}]", commentId);
         Comment comment = query().eq("comment_id", commentId).one();
         if (comment == null) {
             return ResultInfo.fail("该评论不存在");
@@ -72,7 +72,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
     @Override
     public ResultInfo getCommentList(Long articleId) {
-        log.info("articleId: [{}]", articleId);
+        log.debug("articleId: [{}]", articleId);
         //先取一级评论
         List<Comment> list1 = query().eq("article_id", articleId).eq("comment_parent_id", -1).list();
         List<User> users1 = list1.stream().map(comment -> userService.query().eq("user_id", comment.getUserId()).one()).toList();
@@ -95,14 +95,14 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         for (int i = 0; i < list1.size(); i++) {
             Map<String, Object> map = new HashMap<>();
             BeanUtil.beanToMap(list1.get(i), map, false, true);
-            map.put("user", BeanUtil.copyProperties(users1.get(i), UserDto.class));
+            map.put("user", BeanUtil.copyProperties(users1.get(i), UserDTO.class));
             ArrayList<Object> objects = new ArrayList<>();
             List<User> users = users2.get(i);
             List<Comment> comments = list2.get(i);
             comments.forEach(comment -> {
                 Map<String, Object> map1 = new HashMap<>();
                 BeanUtil.beanToMap(comment, map1, false, true);
-                map1.put("user", BeanUtil.copyProperties(users.get(comments.indexOf(comment)), UserDto.class));
+                map1.put("user", BeanUtil.copyProperties(users.get(comments.indexOf(comment)), UserDTO.class));
                 objects.add(map1);
             });
             map.put("value", objects);
@@ -113,7 +113,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
     @Override
     public ResultInfo getCommentListByUserId(Long userId) {
-        log.info("userId: [{}]", userId);
+        log.debug("userId: [{}]", userId);
         try {
             //先取一级评论
             List<Comment> list1 = query().eq("user_id", userId).eq("comment_parent_id", -1).list();
@@ -141,14 +141,14 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
             for (int i = 0; i < list1.size(); i++) {
                 Map<String, Object> map = new HashMap<>();
                 BeanUtil.beanToMap(list1.get(i), map, false, true);
-                map.put("user", BeanUtil.copyProperties(users1.get(i), UserDto.class));
+                map.put("user", BeanUtil.copyProperties(users1.get(i), UserDTO.class));
                 ArrayList<Object> objects = new ArrayList<>();
                 List<User> users = users2.get(i);
                 List<Comment> comments = list2.get(i);
                 comments.forEach(comment -> {
                     Map<String, Object> map1 = new HashMap<>();
                     BeanUtil.beanToMap(comment, map1, false, true);
-                    map1.put("user", BeanUtil.copyProperties(users.get(comments.indexOf(comment)), UserDto.class));
+                    map1.put("user", BeanUtil.copyProperties(users.get(comments.indexOf(comment)), UserDTO.class));
                     objects.add(map1);
                 });
                 map.put("value", objects);
@@ -189,7 +189,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
     @Override
     public ResultInfo deleteCommentByArticleId(Long articleId) {
-        log.info("articleId: [{}]", articleId);
+        log.debug("articleId: [{}]", articleId);
         boolean isSuccess = update().eq("article_id", articleId).remove();
         if (!isSuccess) {
             return ResultInfo.fail("删除失败");
@@ -199,7 +199,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
     @Override
     public ResultInfo deleteCommentByUserId(Long userId) {
-        log.info("userId: [{}]", userId);
+        log.debug("userId: [{}]", userId);
         boolean isSuccess = update().eq("user_id", userId).remove();
         if (!isSuccess) {
             return ResultInfo.fail("删除失败");
@@ -209,7 +209,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
 
     @Override
     public ResultInfo deleteComment(Long commentId) {
-        log.info("commentId: [{}]", commentId);
+        log.debug("commentId: [{}]", commentId);
         boolean isSuccess = removeById(commentId);
         if (!isSuccess) {
             return ResultInfo.fail("删除失败");

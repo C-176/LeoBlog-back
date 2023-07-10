@@ -1,6 +1,7 @@
 package com.chen.LeoBlog.controller;
 
 
+import com.chen.LeoBlog.annotation.Anonymous;
 import com.chen.LeoBlog.service.UploadService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ public class UploadController {
     /**
      * 图片上传，返回图片地址信息。
      */
+    @Anonymous
     @PostMapping("/file")
     public Map<String, Object> uploadImage(@RequestParam("file") MultipartFile file) {
         return uploadService.uploadEditorFile(file);

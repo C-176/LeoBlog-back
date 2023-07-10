@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.Map;
 
 @Slf4j
@@ -14,7 +15,7 @@ import java.util.Map;
 @CrossOrigin
 @RequestMapping("/message")
 public class MessageController {
-    @Autowired
+    @Resource
     private MessageService messageService;
 
     @GetMapping("/user/{userId}/{page}/{size}")
