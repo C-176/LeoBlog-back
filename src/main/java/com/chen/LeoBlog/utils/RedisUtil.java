@@ -1,9 +1,7 @@
 package com.chen.LeoBlog.utils;
 
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.chen.LeoBlog.constant.RedisConstant;
-import com.chen.LeoBlog.po.User;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -88,7 +86,7 @@ public class RedisUtil {
             } catch (Exception e) {
                 log.error("redis缓存异常", e);
             } finally {
-                if (lock != null) releaseLock(lock, lockKey);
+                releaseLock(lock);
             }
         } else {
             try {
@@ -107,11 +105,9 @@ public class RedisUtil {
         RLock lock = redissonClient.getLock(lockKey);
         boolean isSuccess = lock.tryLock(1L, 10L, TimeUnit.SECONDS);
         return isSuccess ? lock : null;
-//        return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(lockKey, "1", RedisConstant.LOCK_EXPIRE_TIME, TimeUnit.SECONDS));
     }
 
-    public void releaseLock(RLock lock, String lockKey) {
+    public void releaseLock(RLock lock) {
         lock.unlock();
-//        redisTemplate.delete(lockKey);
     }
 }

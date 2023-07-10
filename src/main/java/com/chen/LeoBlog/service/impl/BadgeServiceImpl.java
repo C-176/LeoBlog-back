@@ -1,20 +1,18 @@
 package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDto;
+import com.chen.LeoBlog.mapper.BadgeMapper;
 import com.chen.LeoBlog.po.Account;
 import com.chen.LeoBlog.po.Badge;
 import com.chen.LeoBlog.po.Order;
 import com.chen.LeoBlog.po.SetUserBadge;
 import com.chen.LeoBlog.service.AccountService;
 import com.chen.LeoBlog.service.BadgeService;
-import com.chen.LeoBlog.mapper.BadgeMapper;
 import com.chen.LeoBlog.service.OrderService;
 import com.chen.LeoBlog.service.SetUserBadgeService;
 import com.chen.LeoBlog.utils.IdUtil;
@@ -25,13 +23,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -153,6 +149,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
         String key = RedisConstant.USER_ID_LOCK + user1.getUserId();
         RLock lock = null;
         try {
+            // 获取分布式锁
             lock = redisUtil.getLock(key);
             if (lock == null) {
                 return ResultInfo.fail("请勿重复购买");
@@ -180,7 +177,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
         } catch (Exception e) {
 //            log.error("购买徽章失败，用户ID:{},徽章ID:{}", badgeId, user1.getUserId(), e);
         } finally {
-            if (lock != null) redisUtil.releaseLock(lock, key);
+            if (lock != null) redisUtil.releaseLock(lock);
         }
         return ResultInfo.fail("购买失败");
     }
@@ -304,7 +301,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
         } catch (Exception e) {
             log.error("购买徽章失败，用户ID:{},徽章ID:{}", badgeId, user1.getUserId(), e);
         } finally {
-            if (lock != null) redisUtil.releaseLock(lock, key);
+            if (lock != null) redisUtil.releaseLock(lock);
         }
         return ResultInfo.fail("购买失败");
 

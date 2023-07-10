@@ -40,8 +40,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new RefreshTTLInterceptor(redisTemplate)).addPathPatterns("/**");
         registry.addInterceptor(new NoLoginInterceptor(redisTemplate)).addPathPatterns("/**")
-                .excludePathPatterns("/user/**", "/source/**", "/upload/**","/article/*","/comment/*",
-                        "/article/list/*/*","/comment/list/*/*","/badge/*");
+                .excludePathPatterns("/user/**", "/source/**", "/upload/**", "/article/*", "/comment/*",
+                        "/article/list/*/*", "/comment/list/*/*", "/badge/*", "/doc*");
     }
 
     //    CORS跨域配置

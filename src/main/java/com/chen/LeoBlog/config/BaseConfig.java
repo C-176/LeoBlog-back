@@ -17,4 +17,6 @@ public class BaseConfig {
     public YuCongMingClient yuCongMingClient() {
         return new YuCongMingClient(accessKey, secretKey);
     }
+
+
 }
