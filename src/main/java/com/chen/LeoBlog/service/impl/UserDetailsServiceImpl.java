@@ -10,7 +10,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.List;
 import java.util.Set;
 
 @Service
@@ -35,7 +34,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if (user == null) throw new UsernameNotFoundException("用户不存在");
 
 
-        //TODO:查询用户的权限信息
+        // 查询用户的权限信息
         Set<String> permissions = userMapper.getPermissions(user.getUserId());
         // 返回UserDetails的实现类
         return new LoginUser(user, permissions);

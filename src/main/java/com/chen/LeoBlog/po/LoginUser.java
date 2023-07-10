@@ -1,6 +1,5 @@
 package com.chen.LeoBlog.po;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +10,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,15 +33,14 @@ public class LoginUser implements UserDetails, Serializable {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-//        if (authorities == null) {
-//            synchronized (this) {
-//                if (authorities == null) {
-//                    authorities = this.permissions.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
-//                }
-//            }
-//        }
-        return Collections.EMPTY_LIST;
-//        return authorities;
+        if (authorities == null) {
+            synchronized (this) {
+                if (authorities == null) {
+                    authorities = this.permissions.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+                }
+            }
+        }
+        return authorities;
     }
 
     @Override
