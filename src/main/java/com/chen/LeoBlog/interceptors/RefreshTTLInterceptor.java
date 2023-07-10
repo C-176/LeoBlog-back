@@ -1,13 +1,13 @@
 package com.chen.LeoBlog.interceptors;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.chen.LeoBlog.base.Local;
+import com.chen.LeoBlog.constant.MDCKey;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.po.User;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -47,12 +47,17 @@ public class RefreshTTLInterceptor implements HandlerInterceptor {
             log.error("redis异常:[{}]", key, e);
         }
 
-        user = JSONUtil.toBean(user.toString(), User.class);
-        UserDTO userDto = new UserDTO();
-        BeanUtil.copyProperties(user, userDto);
-        if (Local.getUser() == null) {
-            Local.saveUser(userDto);
-        }
+//
+        User loginUser = JSONUtil.toBean(user.toString(), User.class);
+        // 将用户ID存入MDC
+        MDC.put(MDCKey.UID, loginUser.getUserId().toString());
+        // 此处无需将用户信息存入Local，因为在NoLoginInterceptor中已经存入了
+//        UserDto userDto = new UserDto();
+//        BeanUtil.copyProperties(user, userDto);
+//        if (Local.getUser() == null) {
+//            Local.saveUser(userDto);
+//        }
+
 
         return true;
     }

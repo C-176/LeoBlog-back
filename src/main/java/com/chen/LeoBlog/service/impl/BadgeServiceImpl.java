@@ -6,13 +6,13 @@ import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDTO;
+import com.chen.LeoBlog.mapper.BadgeMapper;
 import com.chen.LeoBlog.po.Account;
 import com.chen.LeoBlog.po.Badge;
 import com.chen.LeoBlog.po.Order;
 import com.chen.LeoBlog.po.SetUserBadge;
 import com.chen.LeoBlog.service.AccountService;
 import com.chen.LeoBlog.service.BadgeService;
-import com.chen.LeoBlog.mapper.BadgeMapper;
 import com.chen.LeoBlog.service.OrderService;
 import com.chen.LeoBlog.service.SetUserBadgeService;
 import com.chen.LeoBlog.utils.IdUtil;
@@ -149,6 +149,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
         String key = RedisConstant.USER_ID_LOCK + user1.getUserId();
         RLock lock = null;
         try {
+            // 获取分布式锁
             lock = redisUtil.getLock(key);
             if (lock == null) {
                 return ResultInfo.fail("请勿重复购买");
@@ -176,7 +177,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
         } catch (Exception e) {
 //            log.error("购买徽章失败，用户ID:{},徽章ID:{}", badgeId, user1.getUserId(), e);
         } finally {
-            if (lock != null) redisUtil.releaseLock(lock, key);
+            if (lock != null) redisUtil.releaseLock(lock);
         }
         return ResultInfo.fail("购买失败");
     }
@@ -300,7 +301,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
         } catch (Exception e) {
             log.error("购买徽章失败，用户ID:{},徽章ID:{}", badgeId, user1.getUserId(), e);
         } finally {
-            if (lock != null) redisUtil.releaseLock(lock, key);
+            if (lock != null) redisUtil.releaseLock(lock);
         }
         return ResultInfo.fail("购买失败");
 

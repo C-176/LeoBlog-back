@@ -31,7 +31,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -448,7 +451,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 log.error("更新用户信息失败:->{}", user.getUserId(), e);
                 return ResultInfo.fail("更新失败");
             } finally {
-                if (lock != null) redisUtil.releaseLock(lock, lockKey);
+                if (lock != null) redisUtil.releaseLock(lock);
             }
         }
         return ResultInfo.success();
