@@ -13,13 +13,14 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Description: 业务校验异常码
- * Author: <a href="https://github.com/zongzibinbin">abin</a>
- * Date: 2023-03-26
  */
 @AllArgsConstructor
 @Getter
 public enum HttpErrorEnum implements ErrorEnum {
-    ACCESS_DENIED(401, "登录失效，请重新登录"),
+    UNAUTHORIZED(401, "登录失效，请重新登录"),
+    FORBIDDEN(403, "权限不足，禁止访问"),
+    NOT_FOUND(404, "请求资源不存在，请重试"),
+    SERVER_ERROR(500, "服务器异常"),
     ;
     private Integer httpCode;
     private String msg;

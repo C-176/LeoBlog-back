@@ -144,7 +144,7 @@ public class RedisUtil {
      * @param <T>      方法返回值类型
      * @return 方法执行结果
      */
-    public <T> T executeWithLock(String key, int waitTime, TimeUnit timeUnit, FunctionThrow<T> supplier) {
+    public <T> T executeWithLock(String key, int waitTime, TimeUnit timeUnit, FunctionThrow<?> supplier) {
         RLock lock = null;
         try {
             if (waitTime == -1) lock = getLock(key);
@@ -152,7 +152,7 @@ public class RedisUtil {
             if (lock == null) {
                 throw new RuntimeException("获取锁失败");
             }
-            return supplier.apply();
+            return (T) supplier.apply();
         } catch (Throwable e) {
             throw new RuntimeException(e);
         } finally {

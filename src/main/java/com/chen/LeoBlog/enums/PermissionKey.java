@@ -1,5 +1,10 @@
 package com.chen.LeoBlog.enums;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor
+@AllArgsConstructor
 public enum PermissionKey {
     USER_VIEW("user:view"),
     USER_CREATE("user:create"),
@@ -29,11 +34,4 @@ public enum PermissionKey {
 
     private String actionKey;
 
-    PermissionKey(String actionKey) {
-        this.actionKey = actionKey;
-    }
-
-    public String getActionKey() {
-        return actionKey;
-    }
 }

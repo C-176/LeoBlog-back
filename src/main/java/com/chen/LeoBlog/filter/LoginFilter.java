@@ -8,6 +8,7 @@ import com.chen.LeoBlog.utils.RedisUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -38,16 +39,19 @@ public class LoginFilter extends OncePerRequestFilter {
         // 解析token
         try {
             claimsJws = JWTUtil.parseJwt(token);
-            // 验证签名，防止伪造token
-            if (!JWTUtil.verifyJwtSignature(token)) throw new RuntimeException("token过期,请重新登录");
         } catch (Exception e) {
-            throw new RuntimeException("token过期,请重新登录");
+            filterChain.doFilter(httpServletRequest, httpServletResponse);
+            return;
         }
+
         String userId = claimsJws.getBody().getSubject();
 
         // 获取用户信息
         LoginUser loginUser = redisUtil.getObj(RedisConstant.USER_LOGIN + userId, LoginUser.class);
-        if (loginUser == null) throw new RuntimeException("token过期,请重新登录");
+        if (loginUser == null) {
+            throw new AccountExpiredException("用户信息已过期，请重新登录");
+        }
+        log.debug("用户信息：{}", loginUser);
         // 将用户信息存入到SecurityContext中
         //添加权限
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());

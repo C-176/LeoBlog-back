@@ -69,9 +69,9 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
         </encoder>
     </appender>
 
-    <!-- 按照每天生成日志文件。仅记录错误日志 -->
+    <!-- 按照每天生成日志文件，仅记录错误日志 -->
     <appender name="FILE-ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${log.path}/error/${log.name}_error.log</file>
+        <file>${log.path}/error/${log.name}.log</file>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
@@ -84,7 +84,7 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
         </rollingPolicy>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>${log.pattern}</pattern>
-            <charset>UTF-8</charset>
+            <!--            <charset>UTF-8</charset>-->
         </encoder>
     </appender>
 
