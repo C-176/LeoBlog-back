@@ -5,8 +5,11 @@ public class RedisConstant {
     public static final Long TTL = 7L;
     //登陆后用户信息
     public static final String USER_LOGIN = "user:login:";
-    //刷新token登陆时间
+    //token过期时间
     public static final Long USER_LOGIN_TTL = 7L;
+    // 刷新token的剩余时间
+    public static final Long USER_REFRESH_TTL = 1L;
+
     //验证码
     public static final String USER_CAPTCHA = "user:captcha:";
     //验证码过期时间
