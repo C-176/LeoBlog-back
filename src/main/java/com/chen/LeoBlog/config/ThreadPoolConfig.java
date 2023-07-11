@@ -13,8 +13,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Description: 线程池配置
- * Author: <a href="https://github.com/zongzibinbin">abin</a>
- * Date: 2023-04-09
  */
 @Configuration
 @EnableAsync
@@ -45,6 +43,7 @@ public class ThreadPoolConfig implements AsyncConfigurer {
         executor.setQueueCapacity(200);
         executor.setThreadNamePrefix("blog-executor-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());//满了调用线程执行，认为重要任务
+        // todo: 装饰器模式应用，增加线程异常处理
         executor.setThreadFactory(new MyThreadFactory(executor));
         executor.initialize();
         return executor;
@@ -56,7 +55,7 @@ public class ThreadPoolConfig implements AsyncConfigurer {
         executor.setCorePoolSize(16);
         executor.setMaxPoolSize(16);
         executor.setQueueCapacity(1000);//支持同时推送1000人
-        executor.setThreadNamePrefix("websocket-executor-");
+        executor.setThreadNamePrefix("ws-executor-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());//满了直接丢弃，默认为不重要消息推送
         executor.setThreadFactory(new MyThreadFactory(executor));
         executor.initialize();

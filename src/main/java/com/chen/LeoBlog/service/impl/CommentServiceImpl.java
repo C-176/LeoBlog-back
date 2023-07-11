@@ -2,10 +2,10 @@ package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chen.LeoBlog.base.MsgType;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDTO;
+import com.chen.LeoBlog.enums.MsgTypeEnum;
 import com.chen.LeoBlog.mapper.CommentMapper;
 import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.po.Comment;
@@ -178,7 +178,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         // 确认接收者不是自己
         if (!comment.getUserId().equals(receiverId)) {
             Long msgId = idUtil.nextId("msg");
-            messageService.save(new Message(msgId, comment.getUserId(), receiverId, commentMessage, MsgType.COMMENT_ARTICLE, comment.getArticleId() + ""));
+            messageService.save(new Message(msgId, comment.getUserId(), receiverId, commentMessage, MsgTypeEnum.COMMENT_ARTICLE, comment.getArticleId() + ""));
             redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + receiverId, msgId + "", System.currentTimeMillis());
         }
         if (isSuccess) {

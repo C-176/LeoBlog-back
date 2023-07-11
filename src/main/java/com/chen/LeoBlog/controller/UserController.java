@@ -1,6 +1,5 @@
 package com.chen.LeoBlog.controller;
 
-import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.LineCaptcha;
 import cn.hutool.core.util.StrUtil;
 import com.chen.LeoBlog.Do.UserDO;
@@ -8,11 +7,7 @@ import com.chen.LeoBlog.annotation.Anonymous;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -70,7 +65,7 @@ public class UserController {
         StrUtil.format("Captcha: {}", lineCaptcha.getCode());
         response.setContentType("image/jpeg");
         response.setHeader("Pragma", "No-cache");
-        try (ServletOutputStream outputStream = response.getOutputStream();) {
+        try (ServletOutputStream outputStream = response.getOutputStream()) {
             lineCaptcha.write(outputStream);
         } catch (IOException e) {
             log.error("图片验证码加载失败", e);

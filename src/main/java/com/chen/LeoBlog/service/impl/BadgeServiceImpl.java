@@ -2,8 +2,8 @@ package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chen.LeoBlog.base.Local;
 import com.chen.LeoBlog.base.ResultInfo;
+import com.chen.LeoBlog.base.UserDTOHolder;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.mapper.BadgeMapper;
@@ -145,7 +145,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
     @Override
     @Transactional
     public ResultInfo buyBadge(String badgeId) {
-        UserDTO user1 = Local.getUser();
+        UserDTO user1 = UserDTOHolder.get();
         String key = RedisConstant.USER_ID_LOCK + user1.getUserId();
         RLock lock = null;
         try {
@@ -184,7 +184,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
 
     private ResultInfo check(Long badgeId, boolean isLimit) {
         // 查询用户信息
-        UserDTO user = Local.getUser();
+        UserDTO user = UserDTOHolder.get();
         if (user == null) {
             return ResultInfo.fail("用户未登录");
         }
@@ -241,7 +241,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
 
     @Override
     public ResultInfo buyLimitedBadge(String badgeId) {
-        UserDTO user1 = Local.getUser();
+        UserDTO user1 = UserDTOHolder.get();
         String key = RedisConstant.USER_ID_LOCK + user1.getUserId();
         RLock lock = null;
         try {

@@ -1,12 +1,37 @@
 server:
   port: 8080
 
-spring:
-  thymeleaf:
-    cache: false
-    prefix: classpath:/html/
-    encoding: UTF-8 #编码
-    suffix: .html #模板后缀
-    mode: HTML #模板
-#    check-template: true #检查模板
+#静态资源存放路径前缀
+static-path:
+  D:\\Javacode\\LeoBlog-back\\src\\main\\resources\\static\\
+ip:
+  http://localhost:8080/
 
+yuapi:
+  client:
+    access-key: *
+    secret-key: *
+
+spring:
+  redis:
+    host: *
+    port: 6379
+    password: *
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://*:*/leo_blog?useSSL=false&allowPublicKeyRetrieval=True&allowReconnect=true
+    username: root
+    password: *
+
+  servlet:
+    multipart:
+      max-file-size: 20MB #单个文件最大为20M
+      max-request-size: 20MB #单次请求文件总数大小为20M
+
+logging:
+  #项目日志路径
+  level:
+    com.chen.LeoBlog.dao: debug
+    com.chen.LeoBlog: info
+  config: *

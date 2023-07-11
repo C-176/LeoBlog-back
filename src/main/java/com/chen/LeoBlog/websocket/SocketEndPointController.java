@@ -1,19 +1,17 @@
-package com.chen.LeoBlog.controller;
+package com.chen.LeoBlog.websocket;
 
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.base.SocketPool;
+import com.chen.LeoBlog.config.ThreadPoolConfig;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.po.ChatConnection;
 import com.chen.LeoBlog.po.ChatRecord;
 import com.chen.LeoBlog.service.ChatConnectionService;
 import com.chen.LeoBlog.service.ChatRecordService;
-import com.chen.LeoBlog.service.SocketService;
 import com.chen.LeoBlog.service.UserService;
-import com.chen.LeoBlog.utils.IdUtil;
 import com.yupi.yucongming.dev.client.YuCongMingClient;
 import com.yupi.yucongming.dev.common.BaseResponse;
 import com.yupi.yucongming.dev.model.DevChatRequest;
@@ -21,6 +19,7 @@ import com.yupi.yucongming.dev.model.DevChatResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,7 +31,6 @@ import javax.websocket.*;
 import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.util.*;
-import java.util.concurrent.Executor;
 
 import static com.chen.LeoBlog.base.SocketPool.getSessionMap;
 
@@ -47,21 +45,20 @@ public class SocketEndPointController {
     public static SocketEndPointController socketEndpoint; //public极为重要
     private final String key = RedisConstant.ONLINE_ALL;
 
-    @Autowired
+    @Resource
     private ChatConnectionService chatConnectionService;
-    @Autowired
+    @Resource
     private ChatRecordService chatRecordService;
-    @Autowired
+    @Resource
     private UserService userService;
-    @Autowired
+    @Resource
     private SocketService socketService;
     @Autowired
     private StringRedisTemplate redisTemplate;
     @Resource
     private YuCongMingClient yuCongMingClient;
-
-    @Autowired
-    private Executor asyncExecutor;
+    @Resource(name = ThreadPoolConfig.WS_EXECUTOR)
+    private ThreadPoolTaskExecutor asyncExecutor;
 
     @PostConstruct
     public void init() {

@@ -47,24 +47,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
 
     protected void configure(HttpSecurity http) throws Exception {
-        http
-                .csrf().disable().sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeRequests()
-                .antMatchers("/source/**",
-                        "/comment/*",
-                        "/comment/list/*/*", "/badge/*").permitAll()
-                .anyRequest().authenticated();
-//                .and()
-//                .formLogin()
-//                .and()
-//                .logout().logoutUrl("/logout").logoutSuccessUrl("/login").permitAll();
+        http.csrf().disable().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and().authorizeRequests()
+                .antMatchers("/source/**", "/v2/**", "/favicon.ico").permitAll().anyRequest().authenticated();
         http.addFilterBefore(loginFilter, UsernamePasswordAuthenticationFilter.class);
         // 添加验证失败和鉴权失败异常处理器，统一响应格式
-        http.exceptionHandling()
-                .authenticationEntryPoint(securityExceptionHandler)
-                .accessDeniedHandler(securityExceptionHandler);
+        http.exceptionHandling().authenticationEntryPoint(securityExceptionHandler).accessDeniedHandler(securityExceptionHandler);
         // 允许跨域
         http.cors();
 

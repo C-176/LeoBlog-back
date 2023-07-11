@@ -1,4 +1,4 @@
-package com.chen.LeoBlog.config;
+package com.chen.LeoBlog.websocket;
 
 
 import org.springframework.context.annotation.Bean;
@@ -20,7 +20,7 @@ public class SocketConfig {
     }
 
     @Bean
-    public ServletServerContainerFactoryBean createWebSocketContainer() {
+    public ServletServerContainerFactoryBean servletServerContainerFactoryBean() {
         ServletServerContainerFactoryBean container = new ServletServerContainerFactoryBean();
         // 在此处设置bufferSize
         container.setMaxTextMessageBufferSize(1512000);

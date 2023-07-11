@@ -2,12 +2,12 @@ package com.chen.LeoBlog.filter;
 
 import cn.hutool.core.util.StrUtil;
 import com.chen.LeoBlog.constant.RedisConstant;
-
 import com.chen.LeoBlog.po.LoginUser;
 import com.chen.LeoBlog.utils.JWTUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @Component
+@Slf4j
 public class LoginFilter extends OncePerRequestFilter {
     @Resource
     private RedisUtil redisUtil;
@@ -37,6 +38,7 @@ public class LoginFilter extends OncePerRequestFilter {
         // 解析token
         try {
             claimsJws = JWTUtil.parseJwt(token);
+            // 验证签名，防止伪造token
             if (!JWTUtil.verifyJwtSignature(token)) throw new RuntimeException("token过期,请重新登录");
         } catch (Exception e) {
             throw new RuntimeException("token过期,请重新登录");
@@ -51,7 +53,5 @@ public class LoginFilter extends OncePerRequestFilter {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginUser, null, loginUser.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         filterChain.doFilter(httpServletRequest, httpServletResponse);
-        // 放行
-
     }
 }

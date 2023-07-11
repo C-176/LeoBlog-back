@@ -1,14 +1,15 @@
-package com.chen.LeoBlog.service;
+package com.chen.LeoBlog.websocket;
 
 
 import com.chen.LeoBlog.base.SocketPool;
+import com.chen.LeoBlog.exception.CommonErrorEnum;
+import com.chen.LeoBlog.utils.AssertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.Session;
 import java.io.IOException;
-import java.util.Objects;
 
 
 @Service
@@ -22,15 +23,13 @@ public class SocketService {
      * @param msg     发送的消息
      */
     public void sendMessage(Session session, String msg) {
-        synchronized (session) {
-            final RemoteEndpoint.Basic basic = session.getBasicRemote();
-            if (basic == null)
-                return;
-            try {
-                basic.sendText(msg);
-            } catch (IOException e) {
-                log.error("消息发送异常，异常情况: {}", e.getMessage());
-            }
+        RemoteEndpoint.Basic basic = session.getBasicRemote();
+        try {
+            assert basic != null;
+            basic.sendText(msg);
+        } catch (IOException e) {
+            log.error("消息发送异常，异常情况: {}", e.getMessage());
+            AssertUtil.isFalse(false, CommonErrorEnum.SYSTEM_ERROR);
         }
     }
 

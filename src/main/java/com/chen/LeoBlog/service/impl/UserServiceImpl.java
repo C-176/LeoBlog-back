@@ -1,6 +1,5 @@
 package com.chen.LeoBlog.service.impl;
 
-import cn.hutool.captcha.LineCaptcha;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
@@ -56,8 +55,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    @Resource
-    private LineCaptcha lineCaptcha;
     @Resource
     private RedisUtil redisUtil;
     @Resource
@@ -269,7 +266,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
         } else if (StrUtil.isNotBlank(userEmail) && StrUtil.isBlank(userPassword) && StrUtil.isBlank(userPhone)) {
             log.debug("验证码：{},传入：{}", CodeSender.getCode(), captcha);
-            boolean isCorrect = CodeSender.confirmCode(captcha);
+            boolean isCorrect = codeSender.confirmCode(captcha, userEmail);
             if (!isCorrect) return ResultInfo.fail("验证码错误");
             //更新邮箱
             try {
@@ -284,7 +281,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             }
         } else if (StrUtil.isNotBlank(userPhone) && StrUtil.isBlank(userPassword) && StrUtil.isBlank(userEmail)) {
             log.debug("验证码：{},传入：{}", CodeSender.getCode(), captcha);
-            boolean isCorrect = CodeSender.confirmCode(captcha);
+            boolean isCorrect = codeSender.confirmCode(captcha, userPhone);
             if (!isCorrect) return ResultInfo.fail("验证码错误");
             //更新手机号
             try {
@@ -481,7 +478,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //生成token
         return UUID.randomUUID(true).toString(true);
     }
-
 
 
 }

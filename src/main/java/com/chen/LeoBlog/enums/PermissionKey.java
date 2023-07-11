@@ -1,4 +1,4 @@
-package com.chen.LeoBlog.enumc;
+package com.chen.LeoBlog.enums;
 
 public enum PermissionKey {
     USER_VIEW("user:view"),

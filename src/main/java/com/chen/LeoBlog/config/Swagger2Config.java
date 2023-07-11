@@ -27,7 +27,7 @@ public class Swagger2Config {
                         .version("v1.0")
                         .description("LeoBlog接口文档")
                         //联系人信息
-                        .contact(new Contact("Ryker", "<http://www.LeoBlog.icu>", "RTG1999@163.com"))
+                        .contact(new Contact("Ryker", "<http://www.leoblog.icu>", "RTG1999@163.com"))
                         .build())
                 .select()
                 //指定接口的位置

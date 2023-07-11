@@ -2,10 +2,12 @@ package com.chen.LeoBlog.dto;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
-public class UserDTO {
+public class UserDTO implements Serializable {
+
     private Long userId;
     private String userName;
     private String userNickname;
