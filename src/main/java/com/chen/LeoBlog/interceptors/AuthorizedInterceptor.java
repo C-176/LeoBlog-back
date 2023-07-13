@@ -10,6 +10,7 @@ import com.chen.LeoBlog.base.UserDTOHolder;
 import com.chen.LeoBlog.constant.MDCKey;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDTO;
+import com.chen.LeoBlog.exception.HttpErrorEnum;
 import com.chen.LeoBlog.po.LoginUser;
 import com.chen.LeoBlog.utils.JWTUtil;
 import com.chen.LeoBlog.utils.WebUtil;
@@ -17,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -52,7 +52,7 @@ public class AuthorizedInterceptor implements HandlerInterceptor {
         if (token == null || StrUtil.isBlank(token)) {
             log.error(request.getRequestURI());
             log.debug("token为空:{}", token);
-            WebUtil.responseMsg(response, 401, "用户未登录");
+            WebUtil.responseMsg(response, HttpErrorEnum.UNAUTHORIZED);
             return false;
         }
 
@@ -62,7 +62,7 @@ public class AuthorizedInterceptor implements HandlerInterceptor {
         //如果查不到信息，或者为空，说明用户登陆信息，已经过期，需要重新登陆。
         if (StrUtil.isBlank(s)) {
             log.error("redis中没有用户信息:[{}]", (RedisConstant.USER_LOGIN + userId));
-            WebUtil.responseMsg(response, HttpStatus.UNAUTHORIZED.value(), "用户未登录");
+            WebUtil.responseMsg(response, HttpErrorEnum.UNAUTHORIZED);
             return false;
         }
         // 将用户ID存入MDC

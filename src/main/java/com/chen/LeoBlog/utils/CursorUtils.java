@@ -4,8 +4,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -17,10 +17,7 @@ import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -58,7 +55,7 @@ public class CursorUtils {
 
     public <T> CursorPageBaseResp<T> getCursorPageByMysql(
             IService<T> mapper, CursorPageBaseReq request,
-            LambdaQueryWrapper<T> wrapper, SFunction<T, ?> cursorColumn) {
+            LambdaQueryChainWrapper<T> wrapper, SFunction<T, ?> cursorColumn) {
 
         // 如果不是第一次查询，那么cursor不为空，需要加上小于条件
         if (StrUtil.isNotBlank(request.getCursor())) {
@@ -66,13 +63,14 @@ public class CursorUtils {
         }
         // 按照cursorColumn降序排列
         wrapper.orderByDesc(cursorColumn);
-        Page<T> page = mapper.page(request.plusPage(), wrapper);
+        Page<T> page = mapper.page(request.plusPage(), wrapper.getWrapper());
         String cursor = Optional.ofNullable(CollectionUtil.getLast(page.getRecords()))
                 .map(cursorColumn)
                 .map(String::valueOf)
                 .orElse(null);
+        Collections.reverse(page.getRecords());
         Boolean isLast = page.getRecords().size() != request.getPageSize();
-        return new CursorPageBaseResp<>(cursor, isLast, 0, page.getRecords());
+        return new CursorPageBaseResp<>(cursor, isLast, isLast ? 0 : 0, page.getRecords());
     }
 
     /**

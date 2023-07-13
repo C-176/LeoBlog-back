@@ -40,7 +40,7 @@ public class ControllerLogAspect {
         List<Object> paramList = Stream.of(joinPoint.getArgs()).filter(args -> !(args instanceof ServletRequest)).filter(args -> !(args instanceof ServletResponse)).collect(Collectors.toList());
         String printParamStr = paramList.size() == 1 ? JSONUtil.toJsonStr(paramList.get(0) + "") : JSONUtil.toJsonStr(paramList);
         if (log.isInfoEnabled()) {
-            log.info("[{}:{}]|" + (paramList.size() == 0 ? "" : StrUtil.format("request:{}", printParamStr)), method, uri);
+            log.info("[{}:{}]" + (paramList.size() == 0 ? "" : StrUtil.format("|request:{}", printParamStr)), method, uri);
         }
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();

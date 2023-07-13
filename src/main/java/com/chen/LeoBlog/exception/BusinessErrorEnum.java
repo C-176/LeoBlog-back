@@ -3,12 +3,14 @@ package com.chen.LeoBlog.exception;
 import com.chen.LeoBlog.enums.ErrorEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Description: 业务校验异常码
  */
 @AllArgsConstructor
 @Getter
+@NoArgsConstructor
 public enum BusinessErrorEnum implements ErrorEnum {
     //==================================common==================================
     BUSINESS_ERROR(1001, "{0}"),

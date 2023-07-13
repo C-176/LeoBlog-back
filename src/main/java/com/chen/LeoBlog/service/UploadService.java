@@ -8,10 +8,12 @@ import com.chen.LeoBlog.utils.AssertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.chen.LeoBlog.constant.BaseConstant.UPLOAD_IMG_PATH;
@@ -26,6 +28,8 @@ public class UploadService {
     private String staticPath;
     @Value("${ip}")
     private String serverPrefix;
+    @Value("${imageHub.api-key}")
+    private String apiKey;
 
 
     /**
@@ -86,4 +90,9 @@ public class UploadService {
         return FileUploadResp.success(serverPrefix + imageUrl);
     }
 
+    public File convertMultipartFileToFile(MultipartFile multipartFile) throws IOException {
+        File file = new File(Objects.requireNonNull(multipartFile.getOriginalFilename()));
+        FileCopyUtils.copy(multipartFile.getBytes(), file);
+        return file;
+    }
 }

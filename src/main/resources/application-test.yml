@@ -35,3 +35,6 @@ logging:
     com.chen.LeoBlog.dao: debug
     com.chen.LeoBlog: info
   config: *
+
+imageHub:
+  api-key: *
