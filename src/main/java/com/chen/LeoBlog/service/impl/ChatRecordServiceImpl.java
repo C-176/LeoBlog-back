@@ -105,7 +105,9 @@ public class ChatRecordServiceImpl extends ServiceImpl<ChatRecordMapper, ChatRec
         if (req.getTalkToId().equals("-1")) {
             wrapper = lambdaQuery().eq(ChatRecord::getReceiverId, -1L);
         } else {
-            wrapper = lambdaQuery().eq(ChatRecord::getUserId, userId).eq(ChatRecord::getReceiverId, req.getTalkToId()).or().eq(ChatRecord::getUserId, req.getTalkToId()).eq(ChatRecord::getReceiverId, userId);
+            wrapper = lambdaQuery().and(i -> i
+                    .eq(ChatRecord::getUserId, userId).eq(ChatRecord::getReceiverId, req.getTalkToId())
+                    .or().eq(ChatRecord::getUserId, req.getTalkToId()).eq(ChatRecord::getReceiverId, userId));
         }
         CursorPageBaseResp<ChatRecord> cursorPageBaseResp = cursorUtils.getCursorPageByMysql(this, req, wrapper, ChatRecord::getRecordId);
         return ResultInfo.success(cursorPageBaseResp);
