@@ -1,7 +1,6 @@
 package com.chen.LeoBlog.utils;
 
 
-import com.chen.LeoBlog.constant.BaseConstant;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -13,7 +12,7 @@ import java.security.Key;
 import java.util.Date;
 
 public class JWTUtil {
-    public static final Long EXPIRATION_TIME = 3600000L; // 1 hour
+    public static final Long EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000L; // 7days
     public static final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     // 生成 JWT
@@ -30,7 +29,7 @@ public class JWTUtil {
 
         return Jwts.builder()
                 .setSubject(subject)
-                .setExpiration(new Date(System.currentTimeMillis() + BaseConstant.LONG_TOKEN_TTL))
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }

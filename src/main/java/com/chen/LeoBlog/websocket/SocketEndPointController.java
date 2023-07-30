@@ -75,8 +75,7 @@ public class SocketEndPointController {
         JSONArray ids = JSONUtil.parseArray(map.get("ids"));
         Long[] idArr = ids.toArray(new Long[0]);
         Set<Long> onlineIds = getSessionMap().keySet();
-        List<Integer> status = Arrays.stream(idArr)
-                .map(id -> onlineIds.contains(id) || id < 10 ? 1 : 0).toList();
+        List<Integer> status = Arrays.stream(idArr).map(id -> onlineIds.contains(id) || id < 10 ? 1 : 0).toList();
         return ResultInfo.success(status);
     }
 
@@ -97,10 +96,7 @@ public class SocketEndPointController {
                 // 使用线程池异步发送消息
                 socketEndpoint.asyncExecutor.execute(() -> {
                     //                map.put("type", 1); // 1:上线通知 2:下线通知 3:聊天消息
-                    Map<String, Object> messageMap = Map.of("userId", 1,
-                            "receiveId", f,
-                            "recordContent", socketEndpoint.userService.query().eq("user_id", userId).one().getUserNickname() + " 已上线",
-                            "recordUpdateTime", DateUtil.now(), "type", 1);
+                    Map<String, Object> messageMap = Map.of("userId", 1, "receiveId", f, "recordContent", socketEndpoint.userService.query().eq("user_id", userId).one().getUserNickname() + " 已上线", "recordUpdateTime", DateUtil.now(), "type", 1);
                     socketEndpoint.socketService.sendMessage(sessionMap.get(Long.parseLong(f)), JSONUtil.toJsonStr(messageMap));
                 });
             }
@@ -117,11 +113,9 @@ public class SocketEndPointController {
         Long receiverId = record.getReceiverId();
         Map<Long, Session> onlineUsers = getSessionMap();
         if (receiverId == -1) { // 聊天室消息
-            socketEndpoint.asyncExecutor.execute(
-                    () -> onlineUsers
-                            .forEach((k, v) -> socketEndpoint.socketService.sendMessage(v, JSONUtil.toJsonStr(record)))
-            );
+            socketEndpoint.asyncExecutor.execute(() -> onlineUsers.forEach((k, v) -> socketEndpoint.socketService.sendMessage(v, JSONUtil.toJsonStr(record))));
         } else if (receiverId == 1) {
+            socketEndpoint.chatRecordService.save(record);
             // AI对话
             DevChatRequest devChatRequest = new DevChatRequest();
             // 修改模型Id
@@ -142,39 +136,25 @@ public class SocketEndPointController {
                 record.setRecordContent("我还小，不知道你在说什么");
             }
             socketEndpoint.socketService.sendMessage(onlineUsers.get(userId), JSONUtil.toJsonStr(record));
-            return;
-
-
         } else {
             Session session = onlineUsers.get(receiverId);
             if (session != null) socketEndpoint.socketService.sendMessage(session, JSONUtil.toJsonStr(record));
         }
         try {
-
             socketEndpoint.asyncExecutor.execute(() -> {
-                socketEndpoint.redisTemplate.opsForZSet().add(RedisConstant.CHAT_FRIEND_LIST + userId, receiverId.toString(), new Date().getTime());
                 socketEndpoint.chatRecordService.save(record);
-            });
-            socketEndpoint.asyncExecutor.execute(() -> {
+                if (receiverId != 1)
+                    socketEndpoint.redisTemplate.opsForZSet().add(RedisConstant.CHAT_FRIEND_LIST + userId, receiverId.toString(), new Date().getTime());
                 // 保存聊天连接
-                if (receiverId == -1) return;
+                if (receiverId == -1 || receiverId == 1) return;
                 ChatConnection chatConnection = new ChatConnection();
                 chatConnection.setUserId(userId);
                 chatConnection.setChatLastTime(new Date());
                 chatConnection.setChatUserId(receiverId);
-                socketEndpoint.chatConnectionService.query()
-                        .eq("user_id", userId).eq("chat_user_id", receiverId)
-                        .or()
-                        .eq("user_id", receiverId).eq("chat_user_id", userId)
-                        .orderByDesc("chat_last_time").last("limit 1")
-                        .oneOpt()
-                        .ifPresentOrElse(
-                                chatConnection1 -> {
-                                    chatConnection.setChatLastTime(new Date());
-                                    socketEndpoint.chatConnectionService.updateById(chatConnection);
-                                },
-                                () -> socketEndpoint.chatConnectionService.save(chatConnection)
-                        );
+                socketEndpoint.chatConnectionService.query().eq("user_id", userId).eq("chat_user_id", receiverId).or().eq("user_id", receiverId).eq("chat_user_id", userId).orderByDesc("chat_last_time").last("limit 1").oneOpt().ifPresentOrElse(chatConnection1 -> {
+                    chatConnection.setChatLastTime(new Date());
+                    socketEndpoint.chatConnectionService.updateById(chatConnection);
+                }, () -> socketEndpoint.chatConnectionService.save(chatConnection));
             });
         } catch (Exception e) {
             log.error("保存聊天记录失败", e);
@@ -198,10 +178,7 @@ public class SocketEndPointController {
                 // 使用线程池异步发送消息
                 socketEndpoint.asyncExecutor.execute(() -> {
                     //                map.put("type", 1); // 1:上线通知 2:下线通知 3:聊天消息
-                    Map<String, Object> messageMap = Map.of("userId", 1,
-                            "receiveId", f,
-                            "recordContent", socketEndpoint.userService.query().eq("user_id", userId).one().getUserNickname() + " 已下线",
-                            "recordUpdateTime", DateUtil.now(), "type", 2);
+                    Map<String, Object> messageMap = Map.of("userId", 1, "receiveId", f, "recordContent", socketEndpoint.userService.query().eq("user_id", userId).one().getUserNickname() + " 已下线", "recordUpdateTime", DateUtil.now(), "type", 2);
                     socketEndpoint.socketService.sendMessage(sessionMap.get(Long.parseLong(f)), JSONUtil.toJsonStr(messageMap));
                 });
             }

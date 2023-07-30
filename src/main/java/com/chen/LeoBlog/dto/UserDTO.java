@@ -49,6 +49,8 @@ public class UserDTO implements Serializable {
     private String userIndustry;
     private String userBgPic;
     private Date userRegisterDate;
-
+    // 用户ip
     private String IP;
+    // 用户角色
+    private Integer roleId;
 }

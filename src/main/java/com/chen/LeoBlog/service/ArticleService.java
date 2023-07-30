@@ -1,8 +1,9 @@
 package com.chen.LeoBlog.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.Article;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.chen.LeoBlog.vo.request.PageBaseReq;
 
 import java.util.Map;
 
@@ -12,7 +13,7 @@ import java.util.Map;
  * @createDate 2022-10-17 10:33:52
  */
 public interface ArticleService extends IService<Article> {
-    ResultInfo getArticleList(Integer page, Integer size);
+    ResultInfo getArticleList(PageBaseReq pageBaseReq);
 
     ResultInfo getArticle(Long articleId);
 
@@ -22,7 +23,7 @@ public interface ArticleService extends IService<Article> {
 
     ResultInfo updateArticle(Map<String, Object> map);
 
-    ResultInfo getArticleListByUserId(Long userId, Integer page, Integer size);
+    ResultInfo getArticleListByUserId(PageBaseReq pageBaseReq);
 
     ResultInfo getArticleSumByUserId(Long userId);
 
@@ -38,7 +39,7 @@ public interface ArticleService extends IService<Article> {
 
     ResultInfo likeArticle(Long articleId);
 
-    ResultInfo getArticlesListByUserId(Long userId, Integer page, Integer size);
+    ResultInfo getArticlesListByUserId(PageBaseReq pageBaseReq);
 
     ResultInfo collectArticle(Long articleId);
 

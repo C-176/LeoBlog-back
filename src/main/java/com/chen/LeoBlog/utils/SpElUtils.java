@@ -1,5 +1,7 @@
 package com.chen.LeoBlog.utils;
 
+import com.chen.LeoBlog.base.UserDTOHolder;
+import com.chen.LeoBlog.dto.UserDTO;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
@@ -25,6 +27,10 @@ public class SpElUtils {
         for (int i = 0; i < params.length; i++) {
             context.setVariable(params[i], args[i]);//所有参数都作为原材料扔进去
         }
+        // 将threadLocal中的参数也放入上下文中
+        UserDTO user = UserDTOHolder.get();
+        context.setVariable("user", user);
+
         Expression expression = parser.parseExpression(spEl);
         return expression.getValue(context, String.class);
     }

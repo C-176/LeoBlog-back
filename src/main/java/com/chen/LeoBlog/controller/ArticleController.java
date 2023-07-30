@@ -3,13 +3,11 @@ package com.chen.LeoBlog.controller;
 import com.chen.LeoBlog.annotation.Anonymous;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.service.ArticleService;
-import io.swagger.annotations.ApiOperation;
+import com.chen.LeoBlog.vo.request.PageBaseReq;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -22,9 +20,9 @@ public class ArticleController {
     private ArticleService articleService;
 
     @Anonymous
-    @GetMapping("/list/{page}/{size}")
-    public ResultInfo getArticleList(@PathVariable("page") Integer page, @PathVariable("size") Integer size) {
-        return articleService.getArticleList(page, size);
+    @PostMapping("/list")
+    public ResultInfo getArticleList(@RequestBody PageBaseReq pageBaseReq) {
+        return articleService.getArticleList(pageBaseReq);
     }
 
     @Anonymous
@@ -49,15 +47,15 @@ public class ArticleController {
     }
 
     //获取文章列表
-    @GetMapping("/list/user/{userId}/{page}/{size}")
-    public ResultInfo getArticleListByUserId(@PathVariable("userId") Long userId, @PathVariable("page") Integer page, @PathVariable("size") Integer size) {
-        return articleService.getArticleListByUserId(userId, page, size);
+    @PostMapping("/list/user")
+    public ResultInfo<?> getArticleListByUserId(@RequestBody PageBaseReq pageBaseReq) {
+        return articleService.getArticleListByUserId(pageBaseReq);
     }
 
     //获取草稿列表
-    @GetMapping("/slist/user/{userId}/{page}/{size}")
-    public ResultInfo getArticlesListByUserId(@PathVariable("userId") Long userId, @PathVariable("page") Integer page, @PathVariable("size") Integer size) {
-        return articleService.getArticlesListByUserId(userId, page, size);
+    @PostMapping("/slist/user")
+    public ResultInfo getArticlesListByUserId(@RequestBody PageBaseReq pageBaseReq) {
+        return articleService.getArticlesListByUserId(pageBaseReq);
     }
 
     //查询user的文章数

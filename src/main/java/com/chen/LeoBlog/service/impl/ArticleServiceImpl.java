@@ -22,6 +22,7 @@ import com.chen.LeoBlog.utils.BaseUtil;
 import com.chen.LeoBlog.utils.IdUtil;
 import com.chen.LeoBlog.utils.MessageUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
+import com.chen.LeoBlog.vo.request.PageBaseReq;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -68,7 +69,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private ThreadPoolTaskExecutor asyncExecutor;
 
     @Override
-    public ResultInfo getArticleList(Integer page, Integer size) {
+    public ResultInfo<?> getArticleList(PageBaseReq pageBaseReq) {
+        Integer size = pageBaseReq.getPageSize();
+        Integer page = pageBaseReq.getPageNo();
         log.debug("page: [{}], size: [{}]", page, size);
         Page<Article> pageObj = new Page<>(page, size);
         articleMapper.selectPage(pageObj, new QueryChainWrapper<>(articleMapper).eq("is_article", 1).orderByDesc("article_update_date").getWrapper());
@@ -202,14 +205,18 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    public ResultInfo getArticleListByUserId(Long userId, Integer page, Integer size) {
-        Page<Article> articlePage = new Page<>(page, size);
+    public ResultInfo<?> getArticleListByUserId(PageBaseReq pageBaseReq) {
+        Long userId = BaseUtil.getUserFromLocal().getUserId();
+        Page<Article> articlePage = new Page<>(pageBaseReq.getPageNo(), pageBaseReq.getPageSize());
         articleMapper.selectPage(articlePage, new QueryChainWrapper<>(articleMapper).eq("user_id", userId).eq("is_article", 1).orderByDesc("article_update_date").getWrapper());
         return ResultInfo.success(articlePage);
     }
 
     @Override
-    public ResultInfo getArticlesListByUserId(Long userId, Integer page, Integer size) {
+    public ResultInfo getArticlesListByUserId(PageBaseReq pageBaseReq) {
+        Long userId = BaseUtil.getUserFromLocal().getUserId();
+        Integer page = pageBaseReq.getPageNo();
+        Integer size = pageBaseReq.getPageSize();
         Page<Article> articlePage = new Page<>(page, size);
         articleMapper.selectPage(articlePage, new QueryChainWrapper<>(articleMapper).eq("user_id", userId).eq("is_article", 0).orderByDesc("article_update_date").getWrapper());
         return ResultInfo.success(articlePage);
