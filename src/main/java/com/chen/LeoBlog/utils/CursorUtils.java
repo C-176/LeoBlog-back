@@ -40,17 +40,10 @@ public class CursorUtils {
             typedTuples = RedisUtils.zReverseRangeByScoreWithScores(redisKey, Double.parseDouble(cursorPageBaseReq.getCursor()), cursorPageBaseReq.getPageSize());
         }
 //        (v,s)
-        List<Pair<T, Double>> result = typedTuples
-                .stream()
-                .map(t -> Pair.of(typeConvert.apply(t.getValue()), t.getScore()))
-                .sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue())) // 根据值倒序排列
+        List<Pair<T, Double>> result = typedTuples.stream().map(t -> Pair.of(typeConvert.apply(t.getValue()), t.getScore())).sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue())) // 根据值倒序排列
                 .toList();
-        String cursor = Optional.ofNullable(CollectionUtil.getLast(result))
-                .map(Pair::getValue)
-                .map(String::valueOf)
-                .orElse(null);
-        return new CursorPageBaseResp(cursor,
-                result.size() != cursorPageBaseReq.getPageSize(), 0, result);
+        String cursor = Optional.ofNullable(CollectionUtil.getLast(result)).map(Pair::getValue).map(String::valueOf).orElse(null);
+        return new CursorPageBaseResp(cursor, result.size() != cursorPageBaseReq.getPageSize(), 0, result);
     }
 
     public <T> CursorPageBaseResp<T> getCursorPageByMysql(
@@ -64,10 +57,7 @@ public class CursorUtils {
         // 按照cursorColumn降序排列
         wrapper.orderByDesc(cursorColumn);
         Page<T> page = mapper.page(request.plusPage(), wrapper.getWrapper());
-        String cursor = Optional.ofNullable(CollectionUtil.getLast(page.getRecords()))
-                .map(cursorColumn)
-                .map(String::valueOf)
-                .orElse(null);
+        String cursor = Optional.ofNullable(CollectionUtil.getLast(page.getRecords())).map(cursorColumn).map(String::valueOf).orElse(null);
         Collections.reverse(page.getRecords());
         Boolean isLast = page.getRecords().size() != request.getPageSize();
         return new CursorPageBaseResp<>(cursor, isLast, isLast ? 0 : 0, page.getRecords());
@@ -85,18 +75,16 @@ public class CursorUtils {
      * @return 游标分页
      */
 
-    public <T> CursorPageBaseResp<T> getCursorPage(String key,
-                                                   CursorPageBaseReq req,
+    public <T> CursorPageBaseResp<T> getCursorPage(String key, CursorPageBaseReq req,
                                                    QueryChainWrapper<T> wrapper, Function<T, ?> functionThrow, String primaryKey) {
         Integer offset = req.getOffset();
         Integer count = req.getPageSize();
         // 获取游标对应的分数
         // 取出消息
         Set<ZSetOperations.TypedTuple<String>> typedTuples;
-        if (StrUtil.isNotBlank(req.getCursor()))
-            typedTuples = redisTemplate.opsForZSet()
-                    // 最大的分数在后面，并且往上翻，找更小的分数
-                    .reverseRangeByScoreWithScores(key, 0, Long.parseLong(req.getCursor()), offset, count);
+        if (StrUtil.isNotBlank(req.getCursor())) typedTuples = redisTemplate.opsForZSet()
+                // 最大的分数在后面，并且往上翻，找更小的分数
+                .reverseRangeByScoreWithScores(key, 0, Long.parseLong(req.getCursor()), offset, count);
             // 最小的分数在前面，并且往上翻，找更大的分数
             // .rangeByScoreWithScores(key, lastScore, 0, offset, count);
         else
@@ -105,9 +93,7 @@ public class CursorUtils {
         if (typedTuples == null || typedTuples.isEmpty()) {
             return CursorPageBaseResp.empty();
         }
-        List<String> values = typedTuples.stream()
-                .map(ZSetOperations.TypedTuple::getValue)
-                .filter(Objects::nonNull).toList();
+        List<String> values = typedTuples.stream().map(ZSetOperations.TypedTuple::getValue).filter(Objects::nonNull).toList();
         List<Long> scores = typedTuples.stream().map(ZSetOperations.TypedTuple::getScore).map(Double::longValue).toList();
 
         // 计算偏移量
@@ -125,8 +111,7 @@ public class CursorUtils {
         // 转化为Long
         String ids = StrUtil.join(",", values);
         List<T> result = wrapper.in(primaryKey, values).last("order by field(" + primaryKey + "," + ids + ")").list();
-        Set<String> existIds = result.stream()
-                .map(functionThrow).map(String::valueOf).collect(Collectors.toSet());
+        Set<String> existIds = result.stream().map(functionThrow).map(String::valueOf).collect(Collectors.toSet());
         deleteNoExist(key, values, existIds);
         return CursorPageBaseResp.of(String.valueOf(cursor), offset, result);
     }
