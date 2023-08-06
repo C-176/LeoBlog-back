@@ -4,6 +4,7 @@ import com.chen.LeoBlog.annotation.Anonymous;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.service.ArticleService;
 import com.chen.LeoBlog.vo.request.PageBaseReq;
+import com.chen.LeoBlog.vo.request.PageBaseReqWithUserId;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,7 +49,7 @@ public class ArticleController {
 
     //获取文章列表
     @PostMapping("/list/user")
-    public ResultInfo<?> getArticleListByUserId(@RequestBody PageBaseReq pageBaseReq) {
+    public ResultInfo<?> getArticleListByUserId(@RequestBody PageBaseReqWithUserId pageBaseReq) {
         return articleService.getArticleListByUserId(pageBaseReq);
     }
 

@@ -23,6 +23,7 @@ import com.chen.LeoBlog.utils.IdUtil;
 import com.chen.LeoBlog.utils.MessageUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
 import com.chen.LeoBlog.vo.request.PageBaseReq;
+import com.chen.LeoBlog.vo.request.PageBaseReqWithUserId;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -205,8 +206,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    public ResultInfo<?> getArticleListByUserId(PageBaseReq pageBaseReq) {
-        Long userId = BaseUtil.getUserFromLocal().getUserId();
+    public ResultInfo<?> getArticleListByUserId(PageBaseReqWithUserId pageBaseReq) {
+        Long userId = pageBaseReq.getUserId();
+        if (userId == null) userId = BaseUtil.getUserFromLocal().getUserId();
         Page<Article> articlePage = new Page<>(pageBaseReq.getPageNo(), pageBaseReq.getPageSize());
         articleMapper.selectPage(articlePage, new QueryChainWrapper<>(articleMapper).eq("user_id", userId).eq("is_article", 1).orderByDesc("article_update_date").getWrapper());
         return ResultInfo.success(articlePage);

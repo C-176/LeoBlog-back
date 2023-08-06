@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.vo.request.PageBaseReq;
+import com.chen.LeoBlog.vo.request.PageBaseReqWithUserId;
 
 import java.util.Map;
 
@@ -23,7 +24,7 @@ public interface ArticleService extends IService<Article> {
 
     ResultInfo updateArticle(Map<String, Object> map);
 
-    ResultInfo getArticleListByUserId(PageBaseReq pageBaseReq);
+    ResultInfo getArticleListByUserId(PageBaseReqWithUserId pageBaseReq);
 
     ResultInfo getArticleSumByUserId(Long userId);
 

@@ -117,7 +117,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 //        }
         UserDTO userDto = new UserDTO();
         BeanUtil.copyProperties(user, userDto);
-        String token = JWTUtil.generateJwt(userDto.getUserId().toString(), LONG_TOKEN_TTL);
+        String token = JWTUtil.generateJwt(userDto.getUserId().toString());
         redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN + user.getUserId(), JSONUtil.toJsonStr(loginUser), JWTUtil.EXPIRATION_TIME, TimeUnit.MILLISECONDS);
         log.debug("登陆成功:token: {}", token);
         return ResultInfo.success(Map.of("token", token, "user", userDto));
@@ -159,7 +159,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 保存用户
         boolean isSuccess = save(user);
         if (!isSuccess) return ResultInfo.fail("注册失败,请稍后再试");
-        String token = JWTUtil.generateJwt(user.getUserId().toString(), LONG_TOKEN_TTL);
+        String token = JWTUtil.generateJwt(user.getUserId().toString());
         log.debug("注册成功:token:{}", token);
         return ResultInfo.success(Map.of("token", token));
     }
