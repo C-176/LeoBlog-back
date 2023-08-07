@@ -67,4 +67,5 @@ public class RedisConstant {
     public static final String MESSAGE_BOX_PREFIX = "message:";
 
 
+    public static final String ACTIVITY_USER = "activity:user:";
 }

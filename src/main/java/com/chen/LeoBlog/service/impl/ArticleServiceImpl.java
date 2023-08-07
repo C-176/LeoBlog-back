@@ -7,6 +7,10 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.chen.LeoBlog.activityEvent.ActivityEvent;
+import com.chen.LeoBlog.activityEvent.ActivityEventEnum;
+import com.chen.LeoBlog.activityEvent.ActivityEventHandlerFactory;
+import com.chen.LeoBlog.activityEvent.EventData;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.config.ThreadPoolConfig;
 import com.chen.LeoBlog.constant.RedisConstant;
@@ -103,7 +107,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         Article article = new Article();
         Object labels1 = map.get("labels");
-        Long articleId = idUtil.nextId("article");
+        Long articleId = idUtil.nextId(Article.class);
         if (labels1 != null) {
             List<Label> labels = JSONUtil.toList(JSONUtil.toJsonStr(labels1), Label.class);
             List<Long> ids = labels.stream().map(Label::getLabelId).toList();
@@ -112,6 +116,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         article.setArticleId(articleId);
         UserDTO user = BaseUtil.getUserFromLocal();
+        Long userId = user.getUserId();
         article.setUserId(user.getUserId());
         article.setArticleTitle(map.get("articleTitle").toString());
         article.setArticleContent(map.get("articleContent").toString());
@@ -128,27 +133,36 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         String key = RedisConstant.ARTICLE_INFO + articleId;
         redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
-        // 如果是草稿，无需推送
-        if (article.getIsArticle() == 0) return ResultInfo.success("保存成功");
-        // 将文章推送到关注者的收件箱中
-        String followKey = RedisConstant.FAN_USER_LIST + user.getUserId();
-        Set<String> followers = redisTemplate.opsForSet().members(followKey);
-        if (followers != null && !followers.isEmpty()) {
-            List<Long> list = followers.stream().map(Long::parseLong).toList();
-            list.forEach(id -> {
-                // 异步保存消息
-                asyncExecutor.execute(() -> {
-                    // 遍历添加到收件箱中
-                    Long msgId = idUtil.nextId("msg");
-                    Message message = new Message(msgId, user.getUserId(), id, msgTitle, MsgTypeEnum.PUBLISH_ARTICLE, articleId.toString());
-                    boolean isSaved = messageService.save(message);
-                    if (!isSaved) {
-                        log.error("消息保存失败:{}", msgId);
-                    }
-                    redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + id, msgId + "", System.currentTimeMillis());
-                });
-            });
-        }
+        // TODO：推送文章给关注者
+//        // 如果是草稿，无需推送
+//        if (article.getIsArticle() == 0) return ResultInfo.success("保存成功");
+//        // 将文章推送到关注者的收件箱中
+//        String followKey = RedisConstant.FAN_USER_LIST + user.getUserId();
+//        Set<String> followers = redisTemplate.opsForSet().members(followKey);
+//        if (followers != null && !followers.isEmpty()) {
+//            List<Long> list = followers.stream().map(Long::parseLong).toList();
+//            list.forEach(id -> {
+//                // 异步保存消息
+//                asyncExecutor.execute(() -> {
+//                    // 遍历添加到收件箱中
+//                    Long msgId = idUtil.nextId(Message.class);
+//                    Message message = new Message(msgId, user.getUserId(), id, msgTitle, MsgTypeEnum.PUBLISH_ARTICLE, articleId.toString());
+//                    boolean isSaved = messageService.save(message);
+//                    if (!isSaved) {
+//                        log.error("消息保存失败:{}", msgId);
+//                    }
+//                    redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + id, msgId + "", System.currentTimeMillis());
+//                });
+//            });
+//        }
+        EventData build = EventData.builder().articleId(articleId).articleTitle(article.getArticleTitle()).build();
+        ActivityEvent activityEvent = ActivityEvent.builder().userId(userId).targetId(userId)
+                .createTime(new Date())
+                .type(ActivityEventEnum.ARTICLE_PUBLISH.getActivityEventId())
+                .eventData(build).build();
+
+        ActivityEventHandlerFactory.execute(activityEvent);
+
 
         return ResultInfo.success(articleId);
 

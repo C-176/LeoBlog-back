@@ -6,8 +6,8 @@ import lombok.Data;
 
 @Data
 @ApiModel("聊天记录游标翻页请求")
-public class ChatCursorPageBaseReq extends CursorPageBaseReq {
+public class CursorPageBaseReqWithUserId extends CursorPageBaseReq {
 
-    @ApiModelProperty("聊天对象id")
-    private String talkToId;
+    @ApiModelProperty("userId")
+    private Long userId;
 }

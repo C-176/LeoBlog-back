@@ -113,7 +113,7 @@ public class CursorUtils {
         List<T> result = wrapper.in(primaryKey, values).last("order by field(" + primaryKey + "," + ids + ")").list();
         Set<String> existIds = result.stream().map(functionThrow).map(String::valueOf).collect(Collectors.toSet());
         deleteNoExist(key, values, existIds);
-        return CursorPageBaseResp.of(String.valueOf(cursor), offset, result);
+        return CursorPageBaseResp.of(String.valueOf(cursor), offset, result, req.getPageSize());
     }
 
     @Async

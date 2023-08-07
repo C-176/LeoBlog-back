@@ -13,7 +13,7 @@ import com.chen.LeoBlog.po.ChatRecord;
 import com.chen.LeoBlog.service.ChatRecordService;
 import com.chen.LeoBlog.utils.BaseUtil;
 import com.chen.LeoBlog.utils.CursorUtils;
-import com.chen.LeoBlog.vo.request.ChatCursorPageBaseReq;
+import com.chen.LeoBlog.vo.request.CursorPageBaseReqWithUserId;
 import com.chen.LeoBlog.vo.response.CursorPageBaseResp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,16 +98,16 @@ public class ChatRecordServiceImpl extends ServiceImpl<ChatRecordMapper, ChatRec
     }
 
     @Override
-    public ResultInfo<?> getCursorPage(ChatCursorPageBaseReq req) {
+    public ResultInfo<?> getCursorPage(CursorPageBaseReqWithUserId req) {
         UserDTO userDTO = BaseUtil.getUserFromLocal();
         Long userId = userDTO.getUserId();
         LambdaQueryChainWrapper<ChatRecord> wrapper;
-        if (req.getTalkToId().equals("-1")) {
+        if (req.getUserId().equals(-1L)) {
             wrapper = lambdaQuery().eq(ChatRecord::getReceiverId, -1L);
         } else {
             wrapper = lambdaQuery().and(i -> i
-                    .eq(ChatRecord::getUserId, userId).eq(ChatRecord::getReceiverId, req.getTalkToId())
-                    .or().eq(ChatRecord::getUserId, req.getTalkToId()).eq(ChatRecord::getReceiverId, userId));
+                    .eq(ChatRecord::getUserId, userId).eq(ChatRecord::getReceiverId, req.getUserId())
+                    .or().eq(ChatRecord::getUserId, req.getUserId()).eq(ChatRecord::getReceiverId, userId));
         }
         CursorPageBaseResp<ChatRecord> cursorPageBaseResp = cursorUtils.getCursorPageByMysql(this, req, wrapper, ChatRecord::getRecordId);
         return ResultInfo.success(cursorPageBaseResp);

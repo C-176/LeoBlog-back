@@ -3,7 +3,7 @@ package com.chen.LeoBlog.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.ChatRecord;
-import com.chen.LeoBlog.vo.request.ChatCursorPageBaseReq;
+import com.chen.LeoBlog.vo.request.CursorPageBaseReqWithUserId;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public interface ChatRecordService extends IService<ChatRecord> {
 
     ResultInfo getRecordList(Long userId, Long chatToId, Integer page, Integer size);
 
-    ResultInfo<?> getCursorPage(ChatCursorPageBaseReq req);
+    ResultInfo<?> getCursorPage(CursorPageBaseReqWithUserId req);
 
     ResultInfo<?> addExample();
 }

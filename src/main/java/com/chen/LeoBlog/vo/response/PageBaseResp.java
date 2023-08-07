@@ -74,6 +74,6 @@ public class PageBaseResp<T> {
             return false;
         }
         long pageTotal = totalRecords / pageSize + (totalRecords % pageSize == 0 ? 0 : 1);
-        return pageNo >= pageTotal ? true : false;
+        return pageNo >= pageTotal;
     }
 }

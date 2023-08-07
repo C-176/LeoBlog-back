@@ -2,6 +2,7 @@ package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,6 +14,8 @@ import com.chen.LeoBlog.po.Message;
 import com.chen.LeoBlog.service.MessageService;
 import com.chen.LeoBlog.utils.BaseUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
+import com.chen.LeoBlog.vo.request.CursorPageBaseReqWithUserId;
+import com.chen.LeoBlog.vo.response.CursorPageBaseResp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -46,7 +49,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
         log.info("getMsgByUserId:userId={},page={},size={}", userId, page, size);
         try {
             Page<Message> pageObj = new Page<>(page, size);
-            messageMapper.selectPage(pageObj,new QueryChainWrapper<>(messageMapper).eq("receiver_id", userId).orderByDesc("message_update_time").getWrapper());
+            messageMapper.selectPage(pageObj, new QueryChainWrapper<>(messageMapper).eq("receiver_id", userId).orderByDesc("message_update_time").getWrapper());
             return ResultInfo.success(pageObj);
         } catch (Exception e) {
             log.error("查询消息失败[{}]", userId, e);
@@ -88,7 +91,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
     @Override
     public ResultInfo readMessage(Long messageId) {
         boolean isSuccess = update().eq("message_id", messageId).set("isSaw", 1).update();
-        if(isSuccess) return ResultInfo.success();
+        if (isSuccess) return ResultInfo.success();
         else return ResultInfo.fail("已读失败");
     }
 
@@ -101,7 +104,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
         Set<ZSetOperations.TypedTuple<String>> typedTuples = redisTemplate.opsForZSet()
                 .reverseRangeByScoreWithScores(messageBox, 0, lastScore, offset, count);
         if (typedTuples == null || typedTuples.isEmpty()) {
-            return ResultInfo.success(Map.of("messages",Collections.emptyList(),"lastScore",System.currentTimeMillis(),"offset",0));
+            return ResultInfo.success(Map.of("messages", Collections.emptyList(), "lastScore", System.currentTimeMillis(), "offset", 0));
         }
         // 转化为Long
         Double score = RandomUtil.randomDouble();
@@ -138,6 +141,46 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
 
         return ResultInfo.success(Map.of("messages", messages, "offset", offset, "lastScore", score.longValue()));
 
+    }
+
+    @Override
+    public ResultInfo<?> getActivity(CursorPageBaseReqWithUserId cursorPageBaseReq) {
+        Long userId = cursorPageBaseReq.getUserId();
+        if (cursorPageBaseReq.getUserId() == null) {
+            userId = BaseUtil.getUserFromLocal().getUserId();
+        }
+        if (cursorPageBaseReq.getCursor() == null)
+            cursorPageBaseReq.setCursor(System.currentTimeMillis() + "");
+        long lastScore = Long.parseLong(cursorPageBaseReq.getCursor());
+        Integer count = cursorPageBaseReq.getPageSize();
+        Integer offset = cursorPageBaseReq.getOffset();
+        String messageBox = RedisConstant.ACTIVITY_USER + userId;
+        // 取出所有的文章id
+        Set<ZSetOperations.TypedTuple<String>> typedTuples = redisTemplate.opsForZSet()
+                .reverseRangeByScoreWithScores(messageBox, 0, lastScore, offset, count);
+        if (typedTuples == null || typedTuples.isEmpty()) {
+            return ResultInfo.success(CursorPageBaseResp.of(System.currentTimeMillis() + "", 1, Collections.emptyList(), cursorPageBaseReq.getPageSize()));
+        }
+        // 转化为Long
+        Double score = RandomUtil.randomDouble();
+        // 重置偏移量
+        offset = 1;
+        List<Message> messages = new ArrayList<>();
+
+        for (ZSetOperations.TypedTuple<String> typedTuple : typedTuples) {
+            assert score != null;
+            // 计算当前查到数据中最后一个分数的重复个数
+            if (score.equals(typedTuple.getScore())) {
+                offset++;
+            } else { // 如果不相等，说明已经到了下一个分数的数据，重置偏移量
+                score = typedTuple.getScore();
+                offset = 1;
+            }
+            Message value = JSONUtil.toBean(typedTuple.getValue(), Message.class);
+            messages.add(value);
+        }
+
+        return ResultInfo.success(CursorPageBaseResp.of(score.longValue() + "", offset, messages, cursorPageBaseReq.getPageSize()));
     }
 }
 

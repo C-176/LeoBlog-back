@@ -3,8 +3,7 @@ package com.chen.LeoBlog.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.po.Message;
-
-import java.util.Map;
+import com.chen.LeoBlog.vo.request.CursorPageBaseReqWithUserId;
 
 /**
  * @author 1
@@ -22,4 +21,6 @@ public interface MessageService extends IService<Message> {
     ResultInfo readMessage(Long messageId);
 
     ResultInfo getMsgFromBox(Integer offset, Long lastScore);
+
+    ResultInfo getActivity(CursorPageBaseReqWithUserId cursorPageBaseReq);
 }

@@ -46,6 +46,10 @@ public class CursorPageBaseResp<T> {
         return CollectionUtil.isEmpty(list);
     }
 
+    public static Boolean isLast(List<?> list, Integer pageSize) {
+        return CollectionUtil.isEmpty(list) || list.size() < pageSize;
+    }
+
     public static <T> CursorPageBaseResp<T> empty() {
         CursorPageBaseResp<T> cursorPageBaseResp = new CursorPageBaseResp<>();
         cursorPageBaseResp.setIsLast(true);
@@ -53,8 +57,8 @@ public class CursorPageBaseResp<T> {
         return cursorPageBaseResp;
     }
 
-    public static <T> CursorPageBaseResp<T> of(String cursor, Integer offset, List<T> list) {
-        return new CursorPageBaseResp<>(cursor, isEmpty(list), offset, list);
+    public static <T> CursorPageBaseResp<T> of(String cursor, Integer offset, List<T> list, Integer pageSize) {
+        return new CursorPageBaseResp<>(cursor, isLast(list, pageSize), offset, list);
 
     }
 

@@ -3,7 +3,7 @@ package com.chen.LeoBlog.controller;
 import com.chen.LeoBlog.annotation.Anonymous;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.service.ChatRecordService;
-import com.chen.LeoBlog.vo.request.ChatCursorPageBaseReq;
+import com.chen.LeoBlog.vo.request.CursorPageBaseReqWithUserId;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,7 +30,7 @@ public class ChatRecordController {
 
 
     @PostMapping("/cursor/list")
-    public ResultInfo<?> getCursorPage(@RequestBody ChatCursorPageBaseReq cursorPageBaseReq) {
+    public ResultInfo<?> getCursorPage(@RequestBody CursorPageBaseReqWithUserId cursorPageBaseReq) {
         return chatRecordService.getCursorPage(cursorPageBaseReq);
     }
 
