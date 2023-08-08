@@ -8,6 +8,9 @@ import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.Do.UserDO;
+import com.chen.LeoBlog.activityEvent.ActivityEvent;
+import com.chen.LeoBlog.activityEvent.ActivityEventEnum;
+import com.chen.LeoBlog.activityEvent.ActivityEventHandlerFactory;
 import com.chen.LeoBlog.base.CodeSender;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
@@ -337,6 +340,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             if (Boolean.TRUE.equals(isMember)) return ResultInfo.fail("不能重复关注");
             redisTemplate.opsForSet().add(followKey, followId.toString());
             redisTemplate.opsForSet().add(fansKey, userId.toString());
+            ActivityEvent activityEvent = ActivityEvent.builder().createTime(new Date())
+                    .type(ActivityEventEnum.USER_FOLLOW.getActivityEventId())
+                    .userId(userId).targetId(followId).build();
+            ActivityEventHandlerFactory.execute(activityEvent);
         } catch (Exception e) {
             log.error("关注失败:->{}", userId, e);
             return ResultInfo.fail("关注失败");

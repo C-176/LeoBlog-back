@@ -2,6 +2,10 @@ package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.chen.LeoBlog.activityEvent.ActivityEvent;
+import com.chen.LeoBlog.activityEvent.ActivityEventEnum;
+import com.chen.LeoBlog.activityEvent.ActivityEventHandlerFactory;
+import com.chen.LeoBlog.activityEvent.EventData;
 import com.chen.LeoBlog.annotation.RedissonLock;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.base.UserDTOHolder;
@@ -143,11 +147,11 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @RedissonLock(prefixKey = RedisConstant.USER_ID_LOCK, key = "#user.getUserId()")
-    public ResultInfo buyBadge(String badgeId) {
+    public ResultInfo buyBadge(Long badgeId) {
 
-        ResultInfo isOk = check(Long.valueOf(badgeId), false);
+        ResultInfo isOk = check(badgeId, false);
         if (isOk.getCode() != 200) {
             return isOk;
         }
@@ -156,15 +160,25 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
         Account userAccount = (Account) data.get("userAccount");
         UserDTO user = (UserDTO) data.get("user");
         // 扣除用户余额
-        boolean isSuccess = accountService.update().set("user_money", userAccount.getUserMoney() - badge.getBadgeValue()).eq("user_id", user.getUserId()).update();
+        Long userId = user.getUserId();
+        boolean isSuccess = accountService.update().set("user_money", userAccount.getUserMoney() - badge.getBadgeValue()).eq("user_id", userId).update();
         if (!isSuccess) {
             return ResultInfo.fail("余额扣除失败");
         }
-        setUserBadgeService.save(new SetUserBadge(user.getUserId(), Long.parseLong(badgeId)));
-        redisTemplate.opsForSet().add(RedisConstant.BADGE_OWNER + badgeId, String.valueOf(user.getUserId()));
+        setUserBadgeService.save(new SetUserBadge(userId, badgeId));
+        redisTemplate.opsForSet().add(RedisConstant.BADGE_OWNER + badgeId, String.valueOf(userId));
         Long orderId = idUtil.nextId("order");
-        orderService.addOrder(new Order(orderId, user.getUserId(), Long.parseLong(badgeId), new Date()));
-        redisTemplate.delete(RedisConstant.ACCOUNT_INFO + user.getUserId());
+        orderService.addOrder(new Order(orderId, userId, badgeId, new Date()));
+        redisTemplate.delete(RedisConstant.ACCOUNT_INFO + userId);
+        // 封装活动事件
+        EventData eventData = EventData.builder().badgeId(badgeId)
+                .badgeName(badge.getBadgeName())
+                .build();
+        ActivityEvent activityEvent = ActivityEvent.builder()
+                .type(ActivityEventEnum.GOODS_BUY.getActivityEventId())
+                .targetId(userId).userId(userId)
+                .createTime(new Date()).eventData(eventData).build();
+        ActivityEventHandlerFactory.execute(activityEvent);
         return ResultInfo.success("购买成功");
     }
 
@@ -215,7 +229,7 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
 
     @Override
     @RedissonLock(prefixKey = RedisConstant.USER_ID_LOCK, key = "#user.getUserId()")
-    public ResultInfo buyLimitedBadge(String badgeId) {
+    public ResultInfo buyLimitedBadge(Long badgeId) {
 
         ResultInfo isOk = check(Long.valueOf(badgeId), true);
         if (isOk.getCode() != 200) {
@@ -234,8 +248,9 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
         // 使用lua脚本，保证原子性
         Long orderId = idUtil.nextId("order");
         Long resultNum;
+        Long userId = user.getUserId();
         try {
-            resultNum = redisTemplate.execute(luaScript, List.of(RedisConstant.BADGE_STOCK + badgeId), badgeId, user.getUserId().toString());
+            resultNum = redisTemplate.execute(luaScript, List.of(RedisConstant.BADGE_STOCK + badgeId), badgeId, userId.toString());
         } catch (Exception e) {
             log.error("调用lua脚本出错:'{}'", BUY_LUA_SCRIPT, e);
             return ResultInfo.fail("购买失败");
@@ -250,18 +265,27 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
         // 将订单号存入redis，设置过期时间，过期后将库存加回去
         // 扣除用户余额
         try {
-            boolean isSuccess = accountService.update().set("user_money", userAccount.getUserMoney() - badge.getBadgeValue()).eq("user_id", user.getUserId()).update();
+            boolean isSuccess = accountService.update().set("user_money", userAccount.getUserMoney() - badge.getBadgeValue()).eq("user_id", userId).update();
             if (!isSuccess) {
                 return ResultInfo.fail("余额扣除失败");
             }
-            setUserBadgeService.save(new SetUserBadge(user.getUserId(), Long.parseLong(badgeId)));
-            redisTemplate.opsForSet().add(RedisConstant.BADGE_OWNER + badgeId, String.valueOf(user.getUserId()));
-            orderService.addOrder(new Order(orderId, user.getUserId(), Long.parseLong(badgeId), new Date()));
+            setUserBadgeService.save(new SetUserBadge(userId, badgeId));
+            redisTemplate.opsForSet().add(RedisConstant.BADGE_OWNER + badgeId, String.valueOf(userId));
+            orderService.addOrder(new Order(orderId, userId, badgeId, new Date()));
             update().eq("badge_id", badgeId).set("badge_stock", badge.getBadgeStock() - 1).update();
-            redisTemplate.delete(RedisConstant.ACCOUNT_INFO + user.getUserId());
+            redisTemplate.delete(RedisConstant.ACCOUNT_INFO + userId);
+            // 封装活动事件
+            EventData eventData = EventData.builder().badgeId(badgeId)
+                    .badgeName(badge.getBadgeName())
+                    .build();
+            ActivityEvent activityEvent = ActivityEvent.builder()
+                    .type(ActivityEventEnum.GOODS_BUY.getActivityEventId())
+                    .targetId(userId).userId(userId)
+                    .createTime(new Date()).eventData(eventData).build();
+            ActivityEventHandlerFactory.execute(activityEvent);
             return ResultInfo.success("购买成功");
         } catch (Exception e) {
-            log.error("购买徽章失败，用户ID:{},徽章ID:{}", badgeId, user.getUserId(), e);
+            log.error("购买徽章失败，用户ID:{},徽章ID:{}", badgeId, userId, e);
             redisTemplate.opsForValue().increment(RedisConstant.BADGE_STOCK + badgeId);
         }
         return ResultInfo.fail("购买失败");

@@ -45,13 +45,13 @@ public class BadgeController {
 
     // 购买徽章
     @PostMapping("/buy/{badgeId}")
-    public ResultInfo buyBadge(@PathVariable String badgeId) {
+    public ResultInfo buyBadge(@PathVariable Long badgeId) {
         return badgeService.buyBadge(badgeId);
     }
 
     // 购买限量徽章
     @PostMapping("/buy/limited/{badgeId}")
-    public ResultInfo buyLimitedBadge(@PathVariable String badgeId) {
+    public ResultInfo buyLimitedBadge(@PathVariable Long badgeId) {
         return badgeService.buyLimitedBadge(badgeId);
     }
 

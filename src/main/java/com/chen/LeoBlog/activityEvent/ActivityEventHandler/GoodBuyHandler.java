@@ -28,12 +28,12 @@ public class GoodBuyHandler extends AbstractActivityEventHandler {
 
     @Override
     public ActivityEventEnum getActivityEventType() {
-        return ActivityEventEnum.USER_FOLLOW;
+        return ActivityEventEnum.GOODS_BUY;
     }
 
     @Override
     public String generateTitle(ActivityEvent activityEvent) {
-        return "购买了" + activityEvent.getEventData().getBadgeName();
+        return "购买了徽章：" + activityEvent.getEventData().getBadgeName();
     }
 
 }

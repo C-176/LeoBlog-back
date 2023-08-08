@@ -129,10 +129,10 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             return ResultInfo.fail("添加失败");
         }
 
-        String msgTitle = messageUtil.getArticleMessage("", article.getArticleTitle());
+//        String msgTitle = messageUtil.getArticleMessage("", article.getArticleTitle());
 
-        String key = RedisConstant.ARTICLE_INFO + articleId;
-        redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
+//        String key = RedisConstant.ARTICLE_INFO + articleId;
+//        redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
         // TODO：推送文章给关注者
 //        // 如果是草稿，无需推送
 //        if (article.getIsArticle() == 0) return ResultInfo.success("保存成功");
@@ -261,7 +261,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 isSuccess = update().eq("article_id", articleId).setSql("article_collects = article_collects + 1").update();
                 redisTemplate.delete(RedisConstant.ARTICLE_INFO + articleId);
                 // 异步保存消息
-                asySaveMsg(article, user, 2);
+//                asySaveMsg(article, user, 2);
+
+                // 封装活动事件
+                EventData eventData = EventData.builder().articleId(articleId).articleTitle(article.getArticleTitle())
+                        .userId(userId).build();
+                ActivityEvent activityEvent = ActivityEvent.builder().type(ActivityEventEnum.ARTICLE_COLLECT.getActivityEventId())
+                        .targetId(article.getUserId()).userId(userId)
+                        .createTime(new Date()).eventData(eventData).build();
+                ActivityEventHandlerFactory.execute(activityEvent);
             } catch (Exception e) {
                 log.error("收藏失败", e);
             }
@@ -396,7 +404,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 isSuccess = update().eq("article_id", articleId).setSql("article_likes = article_likes + 1").update();
                 redisTemplate.delete(RedisConstant.ARTICLE_INFO + articleId);
                 // 异步保存消息
-                asySaveMsg(article, user, 3);
+//                asySaveMsg(article, user, 3);
+                // 封装活动事件
+                EventData eventData = EventData.builder().articleId(articleId).articleTitle(article.getArticleTitle())
+                        .userId(userId).build();
+                ActivityEvent activityEvent = ActivityEvent.builder().type(ActivityEventEnum.ARTICLE_LIKE.getActivityEventId())
+                        .targetId(article.getUserId()).userId(userId)
+                        .createTime(new Date()).eventData(eventData).build();
+                ActivityEventHandlerFactory.execute(activityEvent);
+
             } catch (Exception e) {
                 log.error("点赞失败", e);
             }
@@ -415,7 +431,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private void asySaveMsg(Article article, UserDTO user, Integer type) {
         asyncExecutor.execute(() -> {
             // 遍历添加到收件箱中
-            Long msgId = idUtil.nextId("msg");
+            Long msgId = idUtil.nextId(Message.class);
             Long receiverId = article.getUserId();
             String msgTitle = "";
             switch (type) {

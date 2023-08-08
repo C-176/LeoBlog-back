@@ -179,6 +179,7 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message>
             Message value = JSONUtil.toBean(typedTuple.getValue(), Message.class);
             messages.add(value);
         }
+        Collections.reverse(messages);
 
         return ResultInfo.success(CursorPageBaseResp.of(score.longValue() + "", offset, messages, cursorPageBaseReq.getPageSize()));
     }

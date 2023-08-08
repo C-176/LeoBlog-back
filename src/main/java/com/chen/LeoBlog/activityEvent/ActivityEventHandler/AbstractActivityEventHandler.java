@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.util.HashSet;
 import java.util.Set;
 
 @Slf4j
@@ -52,7 +53,9 @@ public abstract class AbstractActivityEventHandler {
     public void saveActivityEventToRedis(Message message) {
         Long userId = message.getUserId();
         Long receiverId = message.getReceiverId();
-        Set<Long> idSet = Set.of(userId, receiverId);
+        Set<Long> idSet = new HashSet<>();
+        idSet.add(userId);
+        idSet.add(receiverId);
         for (long id : idSet) {
             String key = RedisConstant.ACTIVITY_USER + id;
             try {

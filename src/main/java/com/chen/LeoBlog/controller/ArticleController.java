@@ -76,14 +76,13 @@ public class ArticleController {
     public ResultInfo getArticleSumBySortId(@PathVariable("sortId") Long sortId) {
         return articleService.getArticleSumBySortId(sortId);
     }
-    //根据分类id获取文章列表
 
+    //根据分类id获取文章列表
     @Anonymous
     @GetMapping("/list/sort/{sortId}")
     public ResultInfo getArticleListBySortId(@PathVariable("sortId") Long sortId) {
         return articleService.getArticleListBySortId(sortId);
     }
-    //根据分类id获取文章数
 
     //根据标签id获取文章列表
 

@@ -40,8 +40,12 @@ public class IdUtil implements IdentifierGenerator {
 
     @Override
     public Long nextId(Object entity) {
+
         //可以将当前传入的class全类名来作为bizKey,或者提取参数来生成bizKey进行分布式Id调用生成.
         String key = entity.getClass().getTypeName().toLowerCase();
+        if (entity instanceof Class<?>) {
+            key = ((Class<?>) entity).getTypeName().toLowerCase();
+        }
         log.info("key:" + key);
         //        获取当前时间戳
         LocalDateTime now = LocalDateTime.now();

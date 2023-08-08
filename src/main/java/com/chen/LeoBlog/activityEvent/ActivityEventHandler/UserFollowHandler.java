@@ -19,6 +19,7 @@ import java.util.Set;
 @Component
 @Slf4j
 public class UserFollowHandler extends AbstractActivityEventHandler {
+
     @Resource
     private UserService userService;
 
@@ -30,7 +31,7 @@ public class UserFollowHandler extends AbstractActivityEventHandler {
 
     @Override
     public String generateRouter(ActivityEvent activityEvent) {
-        Long userId = activityEvent.getUserId();
+        Long userId = activityEvent.getTargetId();
         if (userId != null) {
             return "/user/" + userId;
         }
@@ -44,7 +45,7 @@ public class UserFollowHandler extends AbstractActivityEventHandler {
 
     @Override
     public String generateTitle(ActivityEvent activityEvent) {
-        return "关注了" + activityEvent.getEventData().getUserName();
+        return "关注了" + userService.getUserObj(activityEvent.getTargetId()).getUserNickname();
     }
 
     @Override
@@ -57,8 +58,9 @@ public class UserFollowHandler extends AbstractActivityEventHandler {
         for (long id : idSet) {
             String key = RedisConstant.ACTIVITY_USER + id;
             try {
-                if (userFromLocal.getUserId().equals(id)) {
+                if (!userFromLocal.getUserId().equals(id)) {
                     message.setMessageTitle("关注了我");
+                    message.setMessageRedirect("/user/" + userId);
                 }
                 RedisUtils.zAdd(key, JSONUtil.toJsonStr(message), message.getMessageUpdateTime().getTime());
             } catch (Exception e) {
