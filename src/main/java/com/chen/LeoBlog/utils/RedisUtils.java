@@ -38,7 +38,8 @@ public class RedisUtils {
 
     public static Long inc(String key, int time, TimeUnit unit) {
         RedisScript<Long> redisScript = new DefaultRedisScript<>(LUA_INCR_EXPIRE, Long.class);
-        return stringRedisTemplate.execute(redisScript, Collections.singletonList(key), String.valueOf(unit.toSeconds(time)));
+        String s = String.valueOf(unit.toSeconds(time));
+        return stringRedisTemplate.execute(redisScript, Collections.singletonList(key), s);
     }
 
     /**
@@ -246,7 +247,8 @@ public class RedisUtils {
         if (Objects.isNull(list)) {
             return new ArrayList<>();
         }
-        return list.stream().map(o -> toBeanOrNull(o, tClass)).collect(Collectors.toList());
+//        return list.stream().map(o -> toBeanOrNull(o, tClass)).collect(Collectors.toList());
+        return (List<T>) list.stream().map(o -> o == null ? 0 : Integer.parseInt(o)).toList();
     }
 
     static <T> T toBeanOrNull(String json, Class<T> tClass) {

@@ -68,4 +68,5 @@ public class RedisConstant {
 
 
     public static final String ACTIVITY_USER = "activity:user:";
+    public static final String CHAT_GROUP_LIST = "chat:group:list:";
 }

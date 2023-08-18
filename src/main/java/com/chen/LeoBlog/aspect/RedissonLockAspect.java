@@ -32,7 +32,7 @@ public class RedissonLockAspect {
         RedissonLock redissonLock = method.getAnnotation(RedissonLock.class);
         //计算分布式锁的key：默认方法限定名+注解排名（可能多个）
         String prefix = StrUtil.isBlank(redissonLock.prefixKey()) ? SpElUtils.getMethodKey(method) : redissonLock.prefixKey();
-        String key = SpElUtils.parseSpEl(method, joinPoint.getArgs(), redissonLock.key());
+        Object key = SpElUtils.parseSpEl(method, joinPoint.getArgs(), redissonLock.key());
         // 获取锁并执行方法
         return redisUtil.executeWithLock(prefix + ":" + key, redissonLock.waitTime(), redissonLock.unit(), joinPoint::proceed);
     }
