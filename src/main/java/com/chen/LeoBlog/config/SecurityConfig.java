@@ -97,23 +97,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) throws Exception {
         // 放行webSocket
-        WebSecurity and = web.ignoring().antMatchers("/net/**").and();
-//        //判断是否有匿名注解
-//        Map<RequestMappingInfo, HandlerMethod> handlerMethods = requestMappingHandlerMapping.getHandlerMethods();
-//        handlerMethods.forEach((info, method) -> {
-//            boolean isAnonymous = method.getMethod().isAnnotationPresent(Anonymous.class);
-//            // 带Anonymous注解的方法直接放行
-//            if (!isAnonymous) isAnonymous = method.getBeanType().isAnnotationPresent(Anonymous.class);
-//            if (!isAnonymous) return;
-//            // 根据请求类型做不同的处理
-//            info.getMethodsCondition().getMethods().forEach(requestMethod -> {
-//                if (requestMethod == RequestMethod.GET) {
-//                    // getPatternsCondition得到请求url数组，遍历处理
-//                    PatternsRequestCondition patternsCondition = info.getPatternsCondition();
-//                    Set<String> patterns = patternsCondition.getPatterns();
-//                    patterns.forEach(pattern -> and.ignoring().antMatchers(HttpMethod.GET, pattern));
-//                }
-//            });
-//        });
+        web.ignoring().antMatchers("/net/**");
     }
 }

@@ -22,9 +22,9 @@ public class MessageController {
         return messageService.getMsgByUserId(userId, page, size);
     }
 
-    @GetMapping("/{offset}/{lastScore}")
-    public ResultInfo getMsgFromBox(@PathVariable("offset") Integer offset, @PathVariable("lastScore") Long lastScore) {
-        return messageService.getMsgFromBox(offset, lastScore);
+    @PostMapping("/message/cursor/list")
+    public ResultInfo<?> getMsgFromBox(@RequestBody CursorPageBaseReqWithUserId cursorPageBaseReq) {
+        return messageService.getMsgFromBox(cursorPageBaseReq);
     }
 
     @PostMapping("/activity/cursor/list")

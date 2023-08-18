@@ -20,7 +20,7 @@ public interface MessageService extends IService<Message> {
 
     ResultInfo readMessage(Long messageId);
 
-    ResultInfo getMsgFromBox(Integer offset, Long lastScore);
+    ResultInfo getMsgFromBox(CursorPageBaseReqWithUserId cursorPageBaseReq);
 
     ResultInfo getActivity(CursorPageBaseReqWithUserId cursorPageBaseReq);
 }

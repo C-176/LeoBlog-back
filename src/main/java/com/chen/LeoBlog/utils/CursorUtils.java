@@ -2,7 +2,6 @@ package com.chen.LeoBlog.utils;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.Pair;
-import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
@@ -31,7 +30,16 @@ public class CursorUtils {
     @Autowired
     private StringRedisTemplate redisTemplate;
 
-    public <T> CursorPageBaseResp<Pair<T, Double>> getCursorPageByRedis(CursorPageBaseReq cursorPageBaseReq, String redisKey, Function<String, T> typeConvert) {
+    /**
+     * @param cursorPageBaseReq
+     * @param redisKey
+     * @param typeConvert
+     * @param desc              是否降序排序，true为降序，false为升序。比如：排行榜要降序排列，消息记录要正序排列
+     * @param <T>
+     * @return
+     */
+    public <T> CursorPageBaseResp<?> getCursorPageByRedis(
+            CursorPageBaseReq cursorPageBaseReq, String redisKey, Function<String, T> typeConvert, boolean desc) {
         Set<ZSetOperations.TypedTuple<String>> typedTuples;
         //第一次访问就直接返回最新的数据，以后都是根据传入的cursor为上限进行查询
         if (StrUtil.isBlank(cursorPageBaseReq.getCursor())) {
@@ -39,16 +47,24 @@ public class CursorUtils {
         } else {
             typedTuples = RedisUtils.zReverseRangeByScoreWithScores(redisKey, Double.parseDouble(cursorPageBaseReq.getCursor()), cursorPageBaseReq.getPageSize());
         }
-//        (v,s)
-        List<Pair<T, Double>> result = typedTuples.stream().map(t -> Pair.of(typeConvert.apply(t.getValue()), t.getScore())).sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue())) // 根据值倒序排列
+
+        List<Pair<T, Double>> result = typedTuples.stream()
+                .map(t -> Pair.of(typeConvert.apply(t.getValue()), t.getScore()))
+                .sorted((o1, o2) -> o2.getValue().compareTo(o1.getValue())) // 根据值倒序排列
                 .toList();
+
+        List<T> list = new ArrayList<>(result.stream().map(Pair::getKey).toList());
         String cursor = Optional.ofNullable(CollectionUtil.getLast(result)).map(Pair::getValue).map(String::valueOf).orElse(null);
-        return new CursorPageBaseResp(cursor, result.size() != cursorPageBaseReq.getPageSize(), 0, result);
+        if (!desc) {
+            Collections.reverse(list);
+        }
+        return CursorPageBaseResp.of(cursor, 1, list, cursorPageBaseReq.getPageSize());
     }
+
 
     public <T> CursorPageBaseResp<T> getCursorPageByMysql(
             IService<T> mapper, CursorPageBaseReq request,
-            LambdaQueryChainWrapper<T> wrapper, SFunction<T, ?> cursorColumn) {
+            LambdaQueryChainWrapper<T> wrapper, SFunction<T, ?> cursorColumn, boolean desc) {
 
         // 如果不是第一次查询，那么cursor不为空，需要加上小于条件
         if (StrUtil.isNotBlank(request.getCursor())) {
@@ -58,9 +74,9 @@ public class CursorUtils {
         wrapper.orderByDesc(cursorColumn);
         Page<T> page = mapper.page(request.plusPage(), wrapper.getWrapper());
         String cursor = Optional.ofNullable(CollectionUtil.getLast(page.getRecords())).map(cursorColumn).map(String::valueOf).orElse(null);
-        Collections.reverse(page.getRecords());
+        if (!desc) Collections.reverse(page.getRecords());
         Boolean isLast = page.getRecords().size() != request.getPageSize();
-        return new CursorPageBaseResp<>(cursor, isLast, isLast ? 0 : 0, page.getRecords());
+        return new CursorPageBaseResp<>(cursor, isLast, 1, page.getRecords());
     }
 
     /**
@@ -83,29 +99,24 @@ public class CursorUtils {
         // 取出消息
         Set<ZSetOperations.TypedTuple<String>> typedTuples;
         if (StrUtil.isNotBlank(req.getCursor())) typedTuples = redisTemplate.opsForZSet()
-                // 最大的分数在后面，并且往上翻，找更小的分数
                 .reverseRangeByScoreWithScores(key, 0, Long.parseLong(req.getCursor()), offset, count);
-            // 最小的分数在前面，并且往上翻，找更大的分数
-            // .rangeByScoreWithScores(key, lastScore, 0, offset, count);
         else
             typedTuples = redisTemplate.opsForZSet().reverseRangeByScoreWithScores(key, 0, Long.MAX_VALUE, offset, count);
 
         if (typedTuples == null || typedTuples.isEmpty()) {
             return CursorPageBaseResp.empty();
         }
-        List<String> values = typedTuples.stream().map(ZSetOperations.TypedTuple::getValue).filter(Objects::nonNull).toList();
-        List<Long> scores = typedTuples.stream().map(ZSetOperations.TypedTuple::getScore).map(Double::longValue).toList();
+        // 根据分数排序，倒序
+        List<ZSetOperations.TypedTuple<String>> list = typedTuples.stream().sorted(((o1, o2) -> o2.getScore().compareTo(o1.getScore()))).toList();
+        List<String> values = list.stream().map(ZSetOperations.TypedTuple::getValue).filter(Objects::nonNull).toList();
+        List<Long> scores = list.stream().map(ZSetOperations.TypedTuple::getScore).filter(Objects::nonNull).map(Double::longValue).toList();
 
         // 计算偏移量
-        Long cursor = RandomUtil.randomLong();
+        Long cursor = scores.get(scores.size() - 1);
         offset = 1;
         for (Long score : scores) {
-            // 计算当前查到数据中最后一个分数的重复个数
-            if (cursor.equals(score)) offset++;
-            else { // 如果不相等，说明已经到了下一个分数的数据，重置偏移量
-                cursor = score;
-                offset = 1;
-            }
+            if (score.equals(cursor)) offset++;
+            else break;
         }
         // 查询，并且保证顺序
         // 转化为Long

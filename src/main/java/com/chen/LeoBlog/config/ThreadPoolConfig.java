@@ -15,7 +15,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * Description: 线程池配置
  */
 @Configuration
-@EnableAsync
+@EnableAsync(proxyTargetClass = true)
 public class ThreadPoolConfig implements AsyncConfigurer {
     /**
      * 项目共用线程池

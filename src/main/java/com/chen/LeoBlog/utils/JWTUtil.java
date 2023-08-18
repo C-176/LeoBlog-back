@@ -43,9 +43,14 @@ public class JWTUtil {
     }
 
     // 解析 JWT中的userId
-    public static Long parseJwtUserId(String jwt) {
+    public static Long parseJwtUserId(String jwt) throws AuthenticationException {
         Jws<Claims> claimsJws = parseJwt(jwt);
         return Long.parseLong(claimsJws.getBody().getSubject());
+    }
+
+    public static Date parseJwtExpiration(String jwt) throws AuthenticationException {
+        Jws<Claims> claimsJws = parseJwt(jwt);
+        return claimsJws.getBody().getExpiration();
     }
 
     // 验证 JWT 签名
@@ -59,6 +64,11 @@ public class JWTUtil {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static boolean verify(String jwt, String token) {
+        Jws<Claims> claimsJws = parseJwt(jwt);
+        return claimsJws.getBody().getSubject().equals(token) && verifyJwtSignature(jwt);
     }
 
     public static void main(String[] args) {

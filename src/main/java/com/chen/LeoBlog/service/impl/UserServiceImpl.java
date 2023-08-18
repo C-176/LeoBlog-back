@@ -11,6 +11,7 @@ import com.chen.LeoBlog.Do.UserDO;
 import com.chen.LeoBlog.activityEvent.ActivityEvent;
 import com.chen.LeoBlog.activityEvent.ActivityEventEnum;
 import com.chen.LeoBlog.activityEvent.ActivityEventHandlerFactory;
+import com.chen.LeoBlog.annotation.RedissonLock;
 import com.chen.LeoBlog.base.CodeSender;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
@@ -64,6 +65,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private IdUtil idUtil;
     @Resource
     private AuthenticationManager authenticationManager;
+
+    public static final int accessTokenExpireTime = 2 * 60 * 60 * 1000;
+    public static final int earlyRefresh = 20 * 60 * 1000;
 
     @Override
     public ResultInfo login(UserDO userDO) {
@@ -120,10 +124,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 //        }
         UserDTO userDto = new UserDTO();
         BeanUtil.copyProperties(user, userDto);
-        String token = JWTUtil.generateJwt(userDto.getUserId().toString());
+        String refreshToken = JWTUtil.generateJwt(userDto.getUserId().toString());
+        String accessToken = JWTUtil.generateJwt(userDto.getUserId().toString(), accessTokenExpireTime);
         redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN + user.getUserId(), JSONUtil.toJsonStr(loginUser), JWTUtil.EXPIRATION_TIME, TimeUnit.MILLISECONDS);
-        log.debug("登陆成功:token: {}", token);
-        return ResultInfo.success(Map.of("token", token, "user", userDto));
+        return ResultInfo.success(Map.of("accessToken", accessToken, "refreshToken", refreshToken, "user", userDto));
     }
 
     @Override
@@ -162,9 +166,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         // 保存用户
         boolean isSuccess = save(user);
         if (!isSuccess) return ResultInfo.fail("注册失败,请稍后再试");
-        String token = JWTUtil.generateJwt(user.getUserId().toString());
-        log.debug("注册成功:token:{}", token);
-        return ResultInfo.success(Map.of("token", token));
+        return ResultInfo.success();
     }
 
     @Override
@@ -219,6 +221,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         return ResultInfo.success(user);
     }
 
+    @RedissonLock(key = "#userId")
     public User getUserObj(Long userId) {
         return redisUtil.getObjWithCache(RedisConstant.USER_INFO + userId, userId,
                 User.class, RedisConstant.USER_INFO_TTL, TimeUnit.DAYS, (uid) -> query().eq("user_id", uid).one());

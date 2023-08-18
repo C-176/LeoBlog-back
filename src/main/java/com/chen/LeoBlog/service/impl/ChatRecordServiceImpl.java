@@ -109,7 +109,7 @@ public class ChatRecordServiceImpl extends ServiceImpl<ChatRecordMapper, ChatRec
                     .eq(ChatRecord::getUserId, userId).eq(ChatRecord::getReceiverId, req.getUserId())
                     .or().eq(ChatRecord::getUserId, req.getUserId()).eq(ChatRecord::getReceiverId, userId));
         }
-        CursorPageBaseResp<ChatRecord> cursorPageBaseResp = cursorUtils.getCursorPageByMysql(this, req, wrapper, ChatRecord::getRecordId);
+        CursorPageBaseResp<ChatRecord> cursorPageBaseResp = cursorUtils.getCursorPageByMysql(this, req, wrapper, ChatRecord::getRecordId, false);
         return ResultInfo.success(cursorPageBaseResp);
     }
 

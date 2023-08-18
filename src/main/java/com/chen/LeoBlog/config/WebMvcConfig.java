@@ -1,7 +1,6 @@
 package com.chen.LeoBlog.config;
 
 import com.chen.LeoBlog.interceptors.AuthorizedInterceptor;
-import com.chen.LeoBlog.interceptors.RefreshTTLInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -20,9 +19,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Resource
     private AuthorizedInterceptor authorizedInterceptor;
-    @Resource
-    private RefreshTTLInterceptor refreshTTLInterceptor;
-
 
     // 静态资源映射
     @Override
@@ -32,7 +28,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
         //这是一种保护机制，为了防止绝对路径被看出来，目录结构暴露
         //解决方法:将虚拟路径/source/upload/images/
         //        向绝对路径 (D:\\Javacode\\LeoBlog\\src\\main\\resources\\static\\source\\upload\\images\\)映射
-
         registry.addResourceHandler("/**").addResourceLocations("file:" + path);
 
     }
@@ -48,7 +43,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
          * excludePathPatterns("/api/user/{id}") 表示放行形如 /api/user/{id} 的请求路径，其中 {id} 表示一个变量，可以匹配任意字符串。
          * excludePathPatterns("/api/user/{id:[0-9]+}") 表示放行形如 /api/user/{id} 的请求路径，其中 {id:[0-9]+} 表示一个变量，只能匹配数字。
          */
-        registry.addInterceptor(refreshTTLInterceptor).addPathPatterns("/**");
         registry.addInterceptor(authorizedInterceptor).addPathPatterns("/**")
                 .excludePathPatterns("/source/**", "/v2/**", "/favicon.ico"
                 );

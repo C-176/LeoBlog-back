@@ -4,17 +4,22 @@ import cn.hutool.json.JSONUtil;
 import com.chen.LeoBlog.activityEvent.ActivityEvent;
 import com.chen.LeoBlog.activityEvent.ActivityEventEnum;
 import com.chen.LeoBlog.activityEvent.ActivityEventHandlerFactory;
+import com.chen.LeoBlog.base.SocketPool;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.po.Message;
 import com.chen.LeoBlog.service.MessageService;
 import com.chen.LeoBlog.utils.IdUtil;
 import com.chen.LeoBlog.utils.RedisUtils;
+import com.chen.LeoBlog.websocket.SocketService;
+import com.chen.LeoBlog.websocket.vo.WebSocketData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import javax.websocket.Session;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
@@ -24,6 +29,8 @@ public abstract class AbstractActivityEventHandler {
     private IdUtil idUtil;
     @Resource
     private MessageService messageService;
+    @Resource
+    private SocketService socketService;
 
     @PostConstruct
     protected void init() {
@@ -56,14 +63,18 @@ public abstract class AbstractActivityEventHandler {
         Set<Long> idSet = new HashSet<>();
         idSet.add(userId);
         idSet.add(receiverId);
+        Map<Long, Session> sessionMap = SocketPool.getSessionMap();
         for (long id : idSet) {
             String key = RedisConstant.ACTIVITY_USER + id;
             try {
                 RedisUtils.zAdd(key, JSONUtil.toJsonStr(message), message.getMessageUpdateTime().getTime());
+                socketService.sendToSession(sessionMap.get(id),
+                        WebSocketData.newActivityNotice(JSONUtil.toJsonStr(message)));
             } catch (Exception e) {
                 log.error("保存活动事件出错", e);
             }
         }
+
     }
 
     // 执行事件

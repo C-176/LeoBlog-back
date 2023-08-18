@@ -48,9 +48,10 @@ public class DataSourceConfig extends WebMvcConfigurerAdapter {
     public RedissonClient redissonClient() {
         Config config = new Config();
         config.useSingleServer()
+                .setConnectionPoolSize(10)
+                .setConnectionMinimumIdleSize(5)
                 // use "redis://" for SSL connection
-                .setAddress("redis://" + environment.getProperty("spring.redis.host") + ":" + environment.getProperty("spring.redis.port"))
-                .setPassword(environment.getProperty("spring.redis.password"));
+                .setAddress("redis://" + environment.getProperty("spring.redis.host") + ":" + environment.getProperty("spring.redis.port")).setPassword(environment.getProperty("spring.redis.password"));
         return Redisson.create(config);
     }
 
