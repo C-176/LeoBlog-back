@@ -1,10 +1,9 @@
-package com.chen.LeoBlog.activityEvent.ActivityEventHandler;
+package com.chen.LeoBlog.activityEvent.ActivityHandler;
 
 import cn.hutool.json.JSONUtil;
-import com.chen.LeoBlog.activityEvent.ActivityEvent;
-import com.chen.LeoBlog.activityEvent.ActivityEventEnum;
-import com.chen.LeoBlog.activityEvent.ActivityEventHandlerFactory;
-import com.chen.LeoBlog.base.SocketPool;
+import com.chen.LeoBlog.activityEvent.Activity;
+import com.chen.LeoBlog.activityEvent.ActivityEnum;
+import com.chen.LeoBlog.activityEvent.ActivityHandlerFactory;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.po.Message;
 import com.chen.LeoBlog.service.MessageService;
@@ -24,7 +23,7 @@ import java.util.Set;
 
 @Slf4j
 @Component
-public abstract class AbstractActivityEventHandler {
+public abstract class AbstractActivityHandler {
     @Resource
     private IdUtil idUtil;
     @Resource
@@ -34,26 +33,26 @@ public abstract class AbstractActivityEventHandler {
 
     @PostConstruct
     protected void init() {
-        ActivityEventHandlerFactory.register(getActivityEventType(), this);
+        ActivityHandlerFactory.register(getActivityEventType(), this);
     }
 
     // 记录活动事件
-    public Message buildMessage(ActivityEvent activityEvent) {
+    public Message buildMessage(Activity activity) {
         // 解析出用户id
-        Long userId = activityEvent.getUserId();
-        Long targetId = activityEvent.getTargetId();
+        Long userId = activity.getUserId();
+        Long targetId = activity.getTargetId();
         // 将活动事件转为Message类型
         return Message.builder().userId(userId)
                 .messageId(idUtil.nextId(Message.class)).receiverId(targetId)
-                .messageUpdateTime(activityEvent.getCreateTime())
-                .messageTitle(generateTitle(activityEvent))
-                .messageContent(generateContent(activityEvent))
-                .messageRedirect(generateRouter(activityEvent))
+                .messageUpdateTime(activity.getCreateTime())
+                .messageTitle(generateTitle(activity))
+                .messageContent(generateContent(activity))
+                .messageRedirect(generateRouter(activity))
                 .messageType(getActivityEventType().getActivityEventId())
                 .build();
     }
 
-    public abstract String generateContent(ActivityEvent activityEvent);
+    public abstract String generateContent(Activity activity);
 
 
     // 保存到redis
@@ -63,13 +62,10 @@ public abstract class AbstractActivityEventHandler {
         Set<Long> idSet = new HashSet<>();
         idSet.add(userId);
         idSet.add(receiverId);
-        Map<Long, Session> sessionMap = SocketPool.getSessionMap();
         for (long id : idSet) {
             String key = RedisConstant.ACTIVITY_USER + id;
             try {
                 RedisUtils.zAdd(key, JSONUtil.toJsonStr(message), message.getMessageUpdateTime().getTime());
-                socketService.sendToSession(sessionMap.get(id),
-                        WebSocketData.newActivityNotice(JSONUtil.toJsonStr(message)));
             } catch (Exception e) {
                 log.error("保存活动事件出错", e);
             }
@@ -77,19 +73,42 @@ public abstract class AbstractActivityEventHandler {
 
     }
 
+    public void sendActivityEventToSession(Message message) {
+        Map<Long, Session> sessionMap = socketService.getSessionMap();
+        HashSet<Long> ids = new HashSet<>();
+        ids.add(message.getUserId());
+        ids.add(message.getReceiverId());
+        ids.forEach(id -> {
+            if (sessionMap.containsKey(id)) {
+                socketService.sendToSession(sessionMap.get(id), WebSocketData.newActivityNotice(JSONUtil.toJsonStr(message)));
+            }
+        });
+    }
+
     // 执行事件
-    public void execute(ActivityEvent activityEvent) {
-        Message entity = buildMessage(activityEvent);
+
+    /**
+     * 保存并通过websocket发送通知
+     *
+     * @param activity
+     */
+    public void execute(Activity activity) {
+        Message entity = buildMessage(activity);
+        sendActivityEventToSession(entity);
+        saveActivityMessage(entity);
+    }
+
+    public void saveActivityMessage(Message entity) {
         saveActivityEventToRedis(entity);
         messageService.save(entity);
     }
 
 
-    public abstract String generateRouter(ActivityEvent activityEvent);
+    public abstract String generateRouter(Activity activity);
 
-    public abstract ActivityEventEnum getActivityEventType();
+    public abstract ActivityEnum getActivityEventType();
 
-    public abstract String generateTitle(ActivityEvent activityEvent);
+    public abstract String generateTitle(Activity activity);
 
 
 }

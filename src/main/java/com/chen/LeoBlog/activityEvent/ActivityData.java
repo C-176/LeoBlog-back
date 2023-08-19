@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @ApiModel(value = "活动事件数据")
-public class EventData {
+public class ActivityData {
     @ApiModelProperty(value = "文章id")
     private Long articleId;
     @ApiModelProperty(value = "评论id")

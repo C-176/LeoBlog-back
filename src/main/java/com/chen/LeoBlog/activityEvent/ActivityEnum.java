@@ -9,7 +9,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Getter
-public enum ActivityEventEnum {
+public enum ActivityEnum {
     // 文章发布
     ARTICLE_PUBLISH(1, "文章发布"),
     // 创建草稿
@@ -33,18 +33,18 @@ public enum ActivityEventEnum {
 
     final String activityEventName;
 
-    private static Map<Integer, ActivityEventEnum> map;
+    private static Map<Integer, ActivityEnum> map;
 
 
     static {
-        map = Arrays.stream(ActivityEventEnum.values()).collect(Collectors.toMap(ActivityEventEnum::getActivityEventId, Function.identity()));
+        map = Arrays.stream(ActivityEnum.values()).collect(Collectors.toMap(ActivityEnum::getActivityEventId, Function.identity()));
     }
 
-    public static ActivityEventEnum of(Integer activityEventId) {
+    public static ActivityEnum of(Integer activityEventId) {
         return map.get(activityEventId);
     }
 
-    ActivityEventEnum(Integer activityEventId, String activityEventName) {
+    ActivityEnum(Integer activityEventId, String activityEventName) {
         this.activityEventName = activityEventName;
         this.activityEventId = activityEventId;
     }
