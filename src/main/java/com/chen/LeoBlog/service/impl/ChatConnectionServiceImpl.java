@@ -3,7 +3,7 @@ package com.chen.LeoBlog.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.chen.LeoBlog.base.ResultInfo;
-import com.chen.LeoBlog.dto.UserDto;
+import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.mapper.ChatConnectionMapper;
 import com.chen.LeoBlog.po.ChatConnection;
 import com.chen.LeoBlog.po.ChatRecord;
@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.*;
 
 import static com.chen.LeoBlog.constant.RedisConstant.CHAT_FRIEND_LIST;
@@ -90,7 +89,7 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
         //将users和records合并
         for (int i = 0; i < users.size(); i++) {
             HashMap<String, Object> hashMap = new HashMap<>();
-            UserDto userDto = new UserDto();
+            UserDTO userDto = new UserDTO();
             BeanUtil.copyProperties(users.get(i), userDto);
             hashMap.put("user", userDto);
             hashMap.put("record", records.get(i));

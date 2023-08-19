@@ -5,12 +5,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 
 @SpringBootApplication
-
+@EnableScheduling
 public class Starter extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
@@ -19,10 +18,7 @@ public class Starter extends SpringBootServletInitializer {
 
         springApplication.setBannerMode(Banner.Mode.OFF); // banner图标关闭
 
-        ConfigurableApplicationContext run = springApplication.run();
-//        for (String beanDefinitionName : run.getBeanDefinitionNames()) {
-//            System.out.println(beanDefinitionName);
-//        }
+        springApplication.run();
     }
 
     @Override

@@ -8,13 +8,17 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
 
     <!--彩色日志-->
     <!--彩色日志依赖的渲染类-->
-    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
-    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter" />
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex"
+                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
     <conversionRule conversionWord="wEx"
-                    converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter" />
+                    converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
     <!--彩色日志格式-->
     <property name="CONSOLE_LOG_PATTERN"
-    value="${CONSOLE_LOG_PATTERN:-%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}" />
+              value="${CONSOLE_LOG_PATTERN:-%clr(${LOG_LEVEL_PATTERN:-%5p})|uid=%X{uid}|%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint}|%clr(${PID}){faint}|%clr(%t){faint}|%clr(%logger){faint}-->%clr(%m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}){magenta}"/>
+
+    <!--              value="|%level|%d{yyyy-MM-dd HH:mm:ss.SSS}|%thread|%X{tid}|uid=%X{uid}|%msg|%X{callChain}%n"/>-->
+
     <!-- 定义日志文件的存储地址，勿在logback配置文件中使用相对路径.通过springProperty可以在properties文件设置相关path,level,name信息 -->
     <!--<springProperty name="log.path" source="LOG_PATH" />-->
     <!--<springProperty name="log.level" source="LOG_LEVEL" />-->
@@ -26,19 +30,18 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
     <!-- 定义日志文件名格式化 -->
     <property name="log.timeFormat" value="yyyy-MM-dd"/>
     <!-- 定义日志文件的输出格式。%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度，%logger{50} 表示logger名字最长50个字符，否则按照句点分割。%msg：日志消息，%n是换行符 -->
-<property name="log.pattern" value="${CONSOLE_LOG_PATTERN}"/>
+    <property name="log.pattern" value="${CONSOLE_LOG_PATTERN}"/>
     <!-- 定义日志文件保留天数 -->
     <property name="log.maxHistory" value="30"/>
     <!-- 定义日志文件最大限制 -->
     <property name="log.maxFileSize" value="10MB"/>
 
 
-
     <!-- 控制台输出 -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-<!--            <charset>GBK</charset>-->
+            <!--            <charset>GBK</charset>-->
             <pattern>${log.pattern}</pattern>
         </encoder>
 
@@ -66,9 +69,9 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
         </encoder>
     </appender>
 
-    <!-- 按照每天生成日志文件。仅记录错误日志 -->
+    <!-- 按照每天生成日志文件，仅记录错误日志 -->
     <appender name="FILE-ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${log.path}/error/${log.name}_error.log</file>
+        <file>${log.path}/error/${log.name}.log</file>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
@@ -81,7 +84,7 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
         </rollingPolicy>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>${log.pattern}</pattern>
-            <charset>UTF-8</charset>
+            <!--            <charset>UTF-8</charset>-->
         </encoder>
     </appender>
 

@@ -1,13 +1,17 @@
 package com.chen.LeoBlog.utils;
 
-import com.chen.LeoBlog.base.Local;
-import com.chen.LeoBlog.dto.UserDto;
+import com.chen.LeoBlog.base.UserDTOHolder;
+import com.chen.LeoBlog.dto.UserDTO;
 
 public class BaseUtil {
-    public static UserDto getUserFromLocal() {
-        UserDto user = Local.getUser();
-        AssertUtil.isTrue(user == null, "用户未登录");
+    /**
+     * 从threadLocal中获取当前登录的用户信息
+     *
+     * @return 当前登录的用户信息
+     */
+    public static UserDTO getUserFromLocal() {
+        UserDTO user = UserDTOHolder.get();
+        AssertUtil.isFalse(user == null, "用户未登录");
         return user;
-
     }
 }

@@ -7,4 +7,6 @@
 LeoBlog.iml
 /src/main/resources/static/source/upload/
 /src/main/resources/static/source/upload/images/
+/src/main/resources/application-dev.yml
+/src/main/resources/application-pro.yml
 /src/test/
