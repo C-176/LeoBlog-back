@@ -29,6 +29,21 @@ spring:
       max-file-size: 20MB #单个文件最大为20M
       max-request-size: 20MB #单次请求文件总数大小为20M
 
+  kafka:
+    bootstrap-servers: *:9092
+    consumer:
+      group-id: my-group
+      auto-offset-reset: earliest
+      enable-auto-commit: false # 关闭自动提交
+      max-poll-records: 200 # 每次拉消息条数
+    producer:
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      retries: 3 # 消息发送失败的重试次数
+      batch-size: 16384 # 发送消息的批次大小
+      acks: 1 # ack方式
+
+
 logging:
   #项目日志路径
   level:
