@@ -2,10 +2,9 @@ package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chen.LeoBlog.activityEvent.ActivityEvent;
-import com.chen.LeoBlog.activityEvent.ActivityEventEnum;
-import com.chen.LeoBlog.activityEvent.ActivityEventHandlerFactory;
-import com.chen.LeoBlog.activityEvent.EventData;
+import com.chen.LeoBlog.activityEvent.Activity;
+import com.chen.LeoBlog.activityEvent.ActivityData;
+import com.chen.LeoBlog.activityEvent.ActivityEnum;
 import com.chen.LeoBlog.annotation.RedissonLock;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.base.UserDTOHolder;
@@ -16,6 +15,7 @@ import com.chen.LeoBlog.po.Account;
 import com.chen.LeoBlog.po.Badge;
 import com.chen.LeoBlog.po.Order;
 import com.chen.LeoBlog.po.SetUserBadge;
+import com.chen.LeoBlog.publisher.ActivityEventPublisher;
 import com.chen.LeoBlog.service.AccountService;
 import com.chen.LeoBlog.service.BadgeService;
 import com.chen.LeoBlog.service.OrderService;
@@ -61,6 +61,8 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
 
     @Resource
     private OrderService orderService;
+    @Resource
+    private ActivityEventPublisher activityEventPublisher;
 
     public static final String BUY_LUA_SCRIPT = "buyLimitedBadge.lua";
     private DefaultRedisScript<Long> luaScript;
@@ -171,14 +173,14 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
         orderService.addOrder(new Order(orderId, userId, badgeId, new Date()));
         redisTemplate.delete(RedisConstant.ACCOUNT_INFO + userId);
         // 封装活动事件
-        EventData eventData = EventData.builder().badgeId(badgeId)
+        ActivityData activityData = ActivityData.builder().badgeId(badgeId)
                 .badgeName(badge.getBadgeName())
                 .build();
-        ActivityEvent activityEvent = ActivityEvent.builder()
-                .type(ActivityEventEnum.GOODS_BUY.getActivityEventId())
+        Activity activity = Activity.builder()
+                .type(ActivityEnum.GOODS_BUY.getActivityEventId())
                 .targetId(userId).userId(userId)
-                .createTime(new Date()).eventData(eventData).build();
-        ActivityEventHandlerFactory.execute(activityEvent);
+                .createTime(new Date()).activityData(activityData).build();
+        activityEventPublisher.publish(activity);
         return ResultInfo.success("购买成功");
     }
 
@@ -275,14 +277,14 @@ public class BadgeServiceImpl extends ServiceImpl<BadgeMapper, Badge>
             update().eq("badge_id", badgeId).set("badge_stock", badge.getBadgeStock() - 1).update();
             redisTemplate.delete(RedisConstant.ACCOUNT_INFO + userId);
             // 封装活动事件
-            EventData eventData = EventData.builder().badgeId(badgeId)
+            ActivityData activityData = ActivityData.builder().badgeId(badgeId)
                     .badgeName(badge.getBadgeName())
                     .build();
-            ActivityEvent activityEvent = ActivityEvent.builder()
-                    .type(ActivityEventEnum.GOODS_BUY.getActivityEventId())
+            Activity activity = Activity.builder()
+                    .type(ActivityEnum.GOODS_BUY.getActivityEventId())
                     .targetId(userId).userId(userId)
-                    .createTime(new Date()).eventData(eventData).build();
-            ActivityEventHandlerFactory.execute(activityEvent);
+                    .createTime(new Date()).activityData(activityData).build();
+            activityEventPublisher.publish(activity);
             return ResultInfo.success("购买成功");
         } catch (Exception e) {
             log.error("购买徽章失败，用户ID:{},徽章ID:{}", badgeId, userId, e);

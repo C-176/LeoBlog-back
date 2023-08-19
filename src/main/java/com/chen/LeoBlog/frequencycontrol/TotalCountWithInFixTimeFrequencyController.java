@@ -1,4 +1,4 @@
-package com.chen.LeoBlog.service.frequencycontrol;
+package com.chen.LeoBlog.frequencycontrol;
 
 import com.chen.LeoBlog.dto.FrequencyControlDTO;
 import com.chen.LeoBlog.utils.RedisUtils;
@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-import static com.chen.LeoBlog.service.frequencycontrol.FrequencyControlStrategyFactory.TOTAL_COUNT_WITH_IN_FIX_TIME_FREQUENCY_CONTROLLER;
 
 
 /**
@@ -61,6 +59,6 @@ public class TotalCountWithInFixTimeFrequencyController
 
     @Override
     protected String getStrategyName() {
-        return TOTAL_COUNT_WITH_IN_FIX_TIME_FREQUENCY_CONTROLLER;
+        return FrequencyControlStrategyFactory.TOTAL_COUNT_WITH_IN_FIX_TIME_FREQUENCY_CONTROLLER;
     }
 }

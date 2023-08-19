@@ -2,9 +2,9 @@ package com.chen.LeoBlog.controller;
 
 import cn.hutool.captcha.LineCaptcha;
 import cn.hutool.core.util.StrUtil;
-import com.chen.LeoBlog.Do.UserDO;
 import com.chen.LeoBlog.annotation.Anonymous;
 import com.chen.LeoBlog.base.ResultInfo;
+import com.chen.LeoBlog.dto.UserLoginOrRegisterDTO;
 import com.chen.LeoBlog.po.User;
 import com.chen.LeoBlog.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,14 +28,14 @@ public class UserController {
 
     @Anonymous
     @PostMapping("/login")
-    public ResultInfo login(@RequestBody UserDO user) {
+    public ResultInfo login(@RequestBody UserLoginOrRegisterDTO user) {
         return userService.login(user);
     }
 
     @Anonymous
     @PostMapping("/register")
-    public ResultInfo register(@RequestBody Map<String, Object> map) {
-        return userService.register(map);
+    public ResultInfo register(@RequestBody UserLoginOrRegisterDTO userLoginOrRegisterDTO) {
+        return userService.register(userLoginOrRegisterDTO);
     }
 
     @Anonymous
@@ -48,8 +48,8 @@ public class UserController {
     @Anonymous
     //发送验证码
     @GetMapping("/confirm/email/{email}")
-    public ResultInfo confirmEmail(@PathVariable("email") String email) {
-        return userService.confirmEmail(email);
+    public void confirmEmail(@PathVariable("email") String email) {
+        userService.confirmEmail(email);
     }
 
     @Anonymous
@@ -100,9 +100,9 @@ public class UserController {
         return userService.updateUser(user);
     }
 
-    @PutMapping("/security/{userId}")
-    public ResultInfo updateSecurityUser(@RequestBody Map<String, Object> map, @PathVariable("userId") Long userId) {
-        return userService.updateSecurityUser(map, userId);
+    @PutMapping("/security")
+    public ResultInfo updateSecurityUser(@RequestBody UserLoginOrRegisterDTO userLoginOrRegisterDTO) {
+        return userService.updateSecurityUser(userLoginOrRegisterDTO);
     }
 
     // 关注

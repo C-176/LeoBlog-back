@@ -1,9 +1,9 @@
-package com.chen.LeoBlog.Do;
+package com.chen.LeoBlog.dto;
 
 import lombok.Data;
 
 @Data
-public class UserDO {
+public class UserLoginOrRegisterDTO {
     private String userName;
     private String userPassword;
     private String captcha;

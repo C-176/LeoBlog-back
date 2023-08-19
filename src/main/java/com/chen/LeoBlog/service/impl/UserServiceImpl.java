@@ -1,30 +1,29 @@
 package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.mail.MailUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chen.LeoBlog.Do.UserDO;
-import com.chen.LeoBlog.activityEvent.ActivityEvent;
-import com.chen.LeoBlog.activityEvent.ActivityEventEnum;
-import com.chen.LeoBlog.activityEvent.ActivityEventHandlerFactory;
+import com.chen.LeoBlog.activityEvent.Activity;
+import com.chen.LeoBlog.activityEvent.ActivityEnum;
 import com.chen.LeoBlog.annotation.RedissonLock;
 import com.chen.LeoBlog.base.CodeSender;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDTO;
+import com.chen.LeoBlog.dto.UserLoginOrRegisterDTO;
 import com.chen.LeoBlog.mapper.UserMapper;
 import com.chen.LeoBlog.po.LoginUser;
 import com.chen.LeoBlog.po.User;
+import com.chen.LeoBlog.publisher.ActivityEventPublisher;
 import com.chen.LeoBlog.service.UserService;
 import com.chen.LeoBlog.utils.IdUtil;
 import com.chen.LeoBlog.utils.JWTUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
+import com.chen.LeoBlog.websocket.vo.LoginVO;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -65,18 +64,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     private IdUtil idUtil;
     @Resource
     private AuthenticationManager authenticationManager;
+    @Resource
+    private ActivityEventPublisher activityEventPublisher;
 
     public static final int accessTokenExpireTime = 2 * 60 * 60 * 1000;
     public static final int earlyRefresh = 20 * 60 * 1000;
 
     @Override
-    public ResultInfo login(UserDO userDO) {
+    public ResultInfo login(UserLoginOrRegisterDTO userLoginOrRegisterDTO) {
         //从map中取出用户名和密码，验证码，手机号，邮箱
-        String username = userDO.getUserName();
-        String password = userDO.getUserPassword();
-        String captcha = userDO.getCaptcha();
-        String phone = userDO.getUserPhone();
-        String email = userDO.getUserEmail();
+        String userName = userLoginOrRegisterDTO.getUserName();
+        String password = userLoginOrRegisterDTO.getUserPassword();
+        String captcha = userLoginOrRegisterDTO.getCaptcha();
+        String phone = userLoginOrRegisterDTO.getUserPhone();
+        String email = userLoginOrRegisterDTO.getUserEmail();
 
 //        if (StrUtil.isBlank(captcha)) {
 //            return ResultInfo.fail("验证码不可为空");
@@ -86,7 +87,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //判断用户名和密码是否为空
         if (StrUtil.isBlank(password)) return ResultInfo.fail("密码不能为空");
         UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(userDO.getUserName(), userDO.getUserPassword());
+                new UsernamePasswordAuthenticationToken(userName, userLoginOrRegisterDTO.getUserPassword());
 
 
         Authentication authenticate;
@@ -127,17 +128,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         String refreshToken = JWTUtil.generateJwt(userDto.getUserId().toString());
         String accessToken = JWTUtil.generateJwt(userDto.getUserId().toString(), accessTokenExpireTime);
         redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN + user.getUserId(), JSONUtil.toJsonStr(loginUser), JWTUtil.EXPIRATION_TIME, TimeUnit.MILLISECONDS);
-        return ResultInfo.success(Map.of("accessToken", accessToken, "refreshToken", refreshToken, "user", userDto));
+        LoginVO build = LoginVO.builder().accessToken(accessToken).refreshToken(refreshToken).user(userDto).build();
+        return ResultInfo.success(build);
     }
 
     @Override
-    public ResultInfo register(Map<String, Object> map) {
+    public ResultInfo register(UserLoginOrRegisterDTO userLoginOrRegisterDTO) {
         //从map中取出用户名和密码，验证码，手机号，邮箱
-        String userName = (String) map.get("userName");
-        String password = (String) map.get("userPassword");
-        String captcha = (String) map.get("captcha");
-        String phone = (String) map.getOrDefault("userPhone", null);
-        String email = (String) map.getOrDefault("userEmail", null);
+        String userName = userLoginOrRegisterDTO.getUserName();
+        String password = userLoginOrRegisterDTO.getUserPassword();
+        String captcha = userLoginOrRegisterDTO.getCaptcha();
+        String phone = userLoginOrRegisterDTO.getUserPhone();
+        String email = userLoginOrRegisterDTO.getUserEmail();
         String s;
         if (phone == null) {
             s = redisTemplate.opsForValue().get(RedisConstant.USER_CAPTCHA + email);
@@ -163,6 +165,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         user.setUserPassword(password);
         user.setUserNickname(NICKNAME_PREFIX + RandomUtil.randomString(4));
         user.setUserRegisterDate(new Date());
+        user.setUserBirthday(new Date());
+        user.setUserSex(1);
+
         // 保存用户
         boolean isSuccess = save(user);
         if (!isSuccess) return ResultInfo.fail("注册失败,请稍后再试");
@@ -183,7 +188,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public ResultInfo confirmEmail(String email) {
+    public void confirmEmail(String email) {
         String captcha = codeSender.send(email);
         //向邮箱发送验证码
         try {
@@ -192,7 +197,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         } catch (Exception e) {
             log.error("发送邮件验证码失败:->{}", email, e);
         }
-        return ResultInfo.success();
     }
 
 
@@ -248,16 +252,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public ResultInfo updateSecurityUser(Map<String, Object> map, Long userId) {
+    public ResultInfo updateSecurityUser(UserLoginOrRegisterDTO userLoginOrRegisterDTO) {
+        Long userId = getUserFromLocal().getUserId();
         String key = RedisConstant.USER_INFO + userId;
-//        从map中取出密码
-        String userPassword = (String) map.getOrDefault("userPassword", null);
-        //取出邮箱
-        String userEmail = (String) map.getOrDefault("userEmail", null);
-        //取出手机号
-        String userPhone = (String) map.getOrDefault("userPhone", null);
-        //取出验证码
-        String captcha = (String) map.getOrDefault("captcha", null);
+        String userPassword = userLoginOrRegisterDTO.getUserPassword();
+        String userEmail = userLoginOrRegisterDTO.getUserEmail();
+        String userPhone = userLoginOrRegisterDTO.getUserPhone();
+        String captcha = userLoginOrRegisterDTO.getCaptcha();
         //如果密码不为空，其他两者为空的话
         if (StrUtil.isNotBlank(userPassword) && StrUtil.isBlank(userEmail) && StrUtil.isBlank(userPhone)) {
             //更新密码
@@ -343,10 +344,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             if (Boolean.TRUE.equals(isMember)) return ResultInfo.fail("不能重复关注");
             redisTemplate.opsForSet().add(followKey, followId.toString());
             redisTemplate.opsForSet().add(fansKey, userId.toString());
-            ActivityEvent activityEvent = ActivityEvent.builder().createTime(new Date())
-                    .type(ActivityEventEnum.USER_FOLLOW.getActivityEventId())
+            Activity activity = Activity.builder().createTime(new Date())
+                    .type(ActivityEnum.USER_FOLLOW.getActivityEventId())
                     .userId(userId).targetId(followId).build();
-            ActivityEventHandlerFactory.execute(activityEvent);
+            activityEventPublisher.publish(activity);
         } catch (Exception e) {
             log.error("关注失败:->{}", userId, e);
             return ResultInfo.fail("关注失败");
@@ -414,8 +415,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public ResultInfo deleteUser(Long userId) {
         //TODO:如果是管理员，可以删除用户，否则只能删除自己
         log.debug("删除用户:{}", userId);
-        UserDTO loginedUser = getUserFromLocal();
-        if (!loginedUser.getUserId().equals(userId)) {
+        UserDTO userDto = getUserFromLocal();
+        if (!userDto.getUserId().equals(userId)) {
             return ResultInfo.fail("无权操作");
         }
 
@@ -433,32 +434,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    @RedissonLock(prefixKey = RedisConstant.USER_ID_LOCK, key = "#user.getUserId()")
     public ResultInfo updateUser(User user) {
-        String lockKey = RedisConstant.LOCK_PREFIX + RedisConstant.USER_INFO_TTL + user.getUserId();
-        boolean isLock;
-        RLock lock;
         try {
-            lock = redisUtil.getLock(lockKey);
-            isLock = redisUtil.getLock(lockKey) != null;
-        } catch (InterruptedException e) {
-            log.error("redisson获取锁出错:->{}", user.getUserId(), e);
-            throw new RuntimeException(e);
-        }
-        if (isLock) {
-            try {
-                boolean isSuccess = update().eq("user_id", user.getUserId()).update(user);
-                if (isSuccess) {
-                    //用户信息更改，清除redis中的缓存
-                    String key = RedisConstant.USER_INFO + user.getUserId();
-                    redisTemplate.delete(key);
-                    return ResultInfo.success("更新成功");
-                }
-            } catch (Exception e) {
-                log.error("更新用户信息失败:->{}", user.getUserId(), e);
-                return ResultInfo.fail("更新失败");
-            } finally {
-                if (lock != null) redisUtil.releaseLock(lock);
+            boolean isSuccess = update().eq("user_id", user.getUserId()).update(user);
+            if (isSuccess) {
+                //用户信息更改，清除redis中的缓存
+                String key = RedisConstant.USER_INFO + user.getUserId();
+                redisTemplate.delete(key);
+                return ResultInfo.success("更新成功");
             }
+        } catch (Exception e) {
+            log.error("更新用户信息失败:->{}", user.getUserId(), e);
+            return ResultInfo.fail("更新失败");
         }
         return ResultInfo.success();
     }
@@ -481,11 +469,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (user != null) return ResultInfo.fail("该用户名已被注册");
 
         return null;
-    }
-
-    private String getToken() {
-        //生成token
-        return UUID.randomUUID(true).toString(true);
     }
 
 

@@ -10,13 +10,13 @@ import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.TokenBucketFrequencyControlDTO;
 import com.chen.LeoBlog.exception.CommonErrorEnum;
 import com.chen.LeoBlog.exception.FrequencyControlException;
+import com.chen.LeoBlog.frequencycontrol.FrequencyControlStrategyFactory;
+import com.chen.LeoBlog.frequencycontrol.FrequencyControlUtil;
 import com.chen.LeoBlog.po.ChatConnection;
 import com.chen.LeoBlog.po.ChatRecord;
 import com.chen.LeoBlog.service.ChatConnectionService;
 import com.chen.LeoBlog.service.ChatRecordService;
 import com.chen.LeoBlog.service.UserService;
-import com.chen.LeoBlog.service.frequencycontrol.FrequencyControlStrategyFactory;
-import com.chen.LeoBlog.service.frequencycontrol.FrequencyControlUtil;
 import com.chen.LeoBlog.utils.AssertUtil;
 import com.chen.LeoBlog.utils.JWTUtil;
 import com.chen.LeoBlog.websocket.enums.WebScoketDataEnum;
@@ -41,8 +41,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
-
-import static com.chen.LeoBlog.base.SocketPool.getSessionMap;
 
 
 @Service
@@ -69,6 +67,10 @@ public class SocketService {
 
     @Resource
     private WebSocketTimer webSocketTimer;
+
+    public Map<Long, Session> getSessionMap() {
+        return SocketPool.getSessionMap();
+    }
 
 
     public boolean sendToSession(Session session, WebSocketData webSocketData) {

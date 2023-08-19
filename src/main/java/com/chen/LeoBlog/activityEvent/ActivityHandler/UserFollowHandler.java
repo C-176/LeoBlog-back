@@ -1,8 +1,8 @@
-package com.chen.LeoBlog.activityEvent.ActivityEventHandler;
+package com.chen.LeoBlog.activityEvent.ActivityHandler;
 
 import cn.hutool.json.JSONUtil;
-import com.chen.LeoBlog.activityEvent.ActivityEvent;
-import com.chen.LeoBlog.activityEvent.ActivityEventEnum;
+import com.chen.LeoBlog.activityEvent.Activity;
+import com.chen.LeoBlog.activityEvent.ActivityEnum;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.po.Message;
@@ -18,20 +18,20 @@ import java.util.Set;
 
 @Component
 @Slf4j
-public class UserFollowHandler extends AbstractActivityEventHandler {
+public class UserFollowHandler extends AbstractActivityHandler {
 
     @Resource
     private UserService userService;
 
     @Override
-    public String generateContent(ActivityEvent activityEvent) {
+    public String generateContent(Activity activity) {
         return null;
     }
 
 
     @Override
-    public String generateRouter(ActivityEvent activityEvent) {
-        Long userId = activityEvent.getTargetId();
+    public String generateRouter(Activity activity) {
+        Long userId = activity.getTargetId();
         if (userId != null) {
             return "/user/" + userId;
         }
@@ -39,13 +39,13 @@ public class UserFollowHandler extends AbstractActivityEventHandler {
     }
 
     @Override
-    public ActivityEventEnum getActivityEventType() {
-        return ActivityEventEnum.USER_FOLLOW;
+    public ActivityEnum getActivityEventType() {
+        return ActivityEnum.USER_FOLLOW;
     }
 
     @Override
-    public String generateTitle(ActivityEvent activityEvent) {
-        return "关注了" + userService.getUserObj(activityEvent.getTargetId()).getUserNickname();
+    public String generateTitle(Activity activity) {
+        return "关注了" + userService.getUserObj(activity.getTargetId()).getUserNickname();
     }
 
     @Override

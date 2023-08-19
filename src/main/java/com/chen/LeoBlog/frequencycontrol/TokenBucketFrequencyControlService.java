@@ -1,4 +1,4 @@
-package com.chen.LeoBlog.service.frequencycontrol;
+package com.chen.LeoBlog.frequencycontrol;
 
 import com.chen.LeoBlog.dto.TokenBucketFrequencyControlDTO;
 import lombok.extern.slf4j.Slf4j;

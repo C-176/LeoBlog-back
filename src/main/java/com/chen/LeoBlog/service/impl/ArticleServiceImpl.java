@@ -7,10 +7,9 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chen.LeoBlog.activityEvent.ActivityEvent;
-import com.chen.LeoBlog.activityEvent.ActivityEventEnum;
-import com.chen.LeoBlog.activityEvent.ActivityEventHandlerFactory;
-import com.chen.LeoBlog.activityEvent.EventData;
+import com.chen.LeoBlog.activityEvent.Activity;
+import com.chen.LeoBlog.activityEvent.ActivityData;
+import com.chen.LeoBlog.activityEvent.ActivityEnum;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.config.ThreadPoolConfig;
 import com.chen.LeoBlog.constant.RedisConstant;
@@ -21,6 +20,7 @@ import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.po.Label;
 import com.chen.LeoBlog.po.Message;
 import com.chen.LeoBlog.po.User;
+import com.chen.LeoBlog.publisher.ActivityEventPublisher;
 import com.chen.LeoBlog.service.*;
 import com.chen.LeoBlog.utils.BaseUtil;
 import com.chen.LeoBlog.utils.IdUtil;
@@ -69,6 +69,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private MessageService messageService;
     @Resource
     private MessageUtil messageUtil;
+    @Resource
+    private ActivityEventPublisher activityEventPublisher;
 
     @Resource(name = ThreadPoolConfig.BLOG_EXECUTOR)
     private ThreadPoolTaskExecutor asyncExecutor;
@@ -147,7 +149,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 //                    // 遍历添加到收件箱中
 //                    Long msgId = idUtil.nextId(Message.class);
 //                    Message message = new Message(msgId, user.getUserId(), id, msgTitle, MsgTypeEnum.PUBLISH_ARTICLE, articleId.toString());
-//                    boolean isSaved = messageService.save(message);
+//                    boolean isSaved = messageService.saveActivityMessage(message);
 //                    if (!isSaved) {
 //                        log.error("消息保存失败:{}", msgId);
 //                    }
@@ -155,13 +157,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 //                });
 //            });
 //        }
-        EventData build = EventData.builder().articleId(articleId).articleTitle(article.getArticleTitle()).build();
-        ActivityEvent activityEvent = ActivityEvent.builder().userId(userId).targetId(userId)
+        ActivityData build = ActivityData.builder().articleId(articleId).articleTitle(article.getArticleTitle()).build();
+        Activity activity = Activity.builder().userId(userId).targetId(userId)
                 .createTime(new Date())
-                .type(ActivityEventEnum.ARTICLE_PUBLISH.getActivityEventId())
-                .eventData(build).build();
+                .type(ActivityEnum.ARTICLE_PUBLISH.getActivityEventId())
+                .activityData(build).build();
 
-        ActivityEventHandlerFactory.execute(activityEvent);
+        activityEventPublisher.publish(activity);
 
 
         return ResultInfo.success(articleId);
@@ -264,12 +266,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 //                asySaveMsg(article, user, 2);
 
                 // 封装活动事件
-                EventData eventData = EventData.builder().articleId(articleId).articleTitle(article.getArticleTitle())
+                ActivityData activityData = ActivityData.builder().articleId(articleId).articleTitle(article.getArticleTitle())
                         .userId(userId).build();
-                ActivityEvent activityEvent = ActivityEvent.builder().type(ActivityEventEnum.ARTICLE_COLLECT.getActivityEventId())
+                Activity activity = Activity.builder().type(ActivityEnum.ARTICLE_COLLECT.getActivityEventId())
                         .targetId(article.getUserId()).userId(userId)
-                        .createTime(new Date()).eventData(eventData).build();
-                ActivityEventHandlerFactory.execute(activityEvent);
+                        .createTime(new Date()).activityData(activityData).build();
+                activityEventPublisher.publish(activity);
             } catch (Exception e) {
                 log.error("收藏失败", e);
             }
@@ -406,12 +408,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 // 异步保存消息
 //                asySaveMsg(article, user, 3);
                 // 封装活动事件
-                EventData eventData = EventData.builder().articleId(articleId).articleTitle(article.getArticleTitle())
+                ActivityData activityData = ActivityData.builder().articleId(articleId).articleTitle(article.getArticleTitle())
                         .userId(userId).build();
-                ActivityEvent activityEvent = ActivityEvent.builder().type(ActivityEventEnum.ARTICLE_LIKE.getActivityEventId())
+                Activity activity = Activity.builder().type(ActivityEnum.ARTICLE_LIKE.getActivityEventId())
                         .targetId(article.getUserId()).userId(userId)
-                        .createTime(new Date()).eventData(eventData).build();
-                ActivityEventHandlerFactory.execute(activityEvent);
+                        .createTime(new Date()).activityData(activityData).build();
+                activityEventPublisher.publish(activity);
 
             } catch (Exception e) {
                 log.error("点赞失败", e);

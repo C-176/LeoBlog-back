@@ -82,7 +82,7 @@ public class ChatRecordServiceImpl extends ServiceImpl<ChatRecordMapper, ChatRec
 //                    chatRecord.setReceiverId(userId);
 //                    chatRecord.setRecordContent("你好，我是LeoBlog的机器人，有什么问题可以问我哦");
 //                    chatRecord.setRecordUpdateTime(new Date());
-//                    save(chatRecord);
+//                    saveActivityMessage(chatRecord);
 //                    list.add(chatRecord);
 //                }
 //            }

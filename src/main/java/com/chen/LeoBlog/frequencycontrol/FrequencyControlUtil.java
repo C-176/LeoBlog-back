@@ -1,4 +1,4 @@
-package com.chen.LeoBlog.service.frequencycontrol;
+package com.chen.LeoBlog.frequencycontrol;
 
 
 import cn.hutool.core.util.ObjectUtil;

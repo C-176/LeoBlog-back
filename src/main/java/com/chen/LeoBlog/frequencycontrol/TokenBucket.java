@@ -1,4 +1,4 @@
-package com.chen.LeoBlog.service.frequencycontrol;
+package com.chen.LeoBlog.frequencycontrol;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

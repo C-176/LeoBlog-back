@@ -4,7 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.chen.LeoBlog.annotation.FrequencyControl;
 import com.chen.LeoBlog.base.UserDTOHolder;
 import com.chen.LeoBlog.dto.FrequencyControlDTO;
-import com.chen.LeoBlog.service.frequencycontrol.FrequencyControlUtil;
+import com.chen.LeoBlog.frequencycontrol.FrequencyControlUtil;
 import com.chen.LeoBlog.utils.SpElUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.chen.LeoBlog.service.frequencycontrol.FrequencyControlStrategyFactory.TOTAL_COUNT_WITH_IN_FIX_TIME_FREQUENCY_CONTROLLER;
+import static com.chen.LeoBlog.frequencycontrol.FrequencyControlStrategyFactory.TOTAL_COUNT_WITH_IN_FIX_TIME_FREQUENCY_CONTROLLER;
 
 
 /**
