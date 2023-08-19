@@ -7,31 +7,37 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chen.LeoBlog.base.Local;
-import com.chen.LeoBlog.base.MsgType;
+import com.chen.LeoBlog.activityEvent.Activity;
+import com.chen.LeoBlog.activityEvent.ActivityData;
+import com.chen.LeoBlog.activityEvent.ActivityEnum;
 import com.chen.LeoBlog.base.ResultInfo;
+import com.chen.LeoBlog.config.ThreadPoolConfig;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDTO;
+import com.chen.LeoBlog.enums.MsgTypeEnum;
 import com.chen.LeoBlog.mapper.ArticleMapper;
 import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.po.Label;
 import com.chen.LeoBlog.po.Message;
 import com.chen.LeoBlog.po.User;
+import com.chen.LeoBlog.publisher.ActivityEventPublisher;
 import com.chen.LeoBlog.service.*;
 import com.chen.LeoBlog.utils.BaseUtil;
 import com.chen.LeoBlog.utils.IdUtil;
 import com.chen.LeoBlog.utils.MessageUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
+import com.chen.LeoBlog.vo.request.PageBaseReq;
+import com.chen.LeoBlog.vo.request.PageBaseReqWithUserId;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -63,11 +69,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private MessageService messageService;
     @Resource
     private MessageUtil messageUtil;
-    @Autowired
-    private Executor asyncExecutor;
+    @Resource
+    private ActivityEventPublisher activityEventPublisher;
+
+    @Resource(name = ThreadPoolConfig.BLOG_EXECUTOR)
+    private ThreadPoolTaskExecutor asyncExecutor;
 
     @Override
-    public ResultInfo getArticleList(Integer page, Integer size) {
+    public ResultInfo<?> getArticleList(PageBaseReq pageBaseReq) {
+        Integer size = pageBaseReq.getPageSize();
+        Integer page = pageBaseReq.getPageNo();
         log.debug("page: [{}], size: [{}]", page, size);
         Page<Article> pageObj = new Page<>(page, size);
         articleMapper.selectPage(pageObj, new QueryChainWrapper<>(articleMapper).eq("is_article", 1).orderByDesc("article_update_date").getWrapper());
@@ -98,7 +109,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         Article article = new Article();
         Object labels1 = map.get("labels");
-        Long articleId = idUtil.nextId("article");
+        Long articleId = idUtil.nextId(Article.class);
         if (labels1 != null) {
             List<Label> labels = JSONUtil.toList(JSONUtil.toJsonStr(labels1), Label.class);
             List<Long> ids = labels.stream().map(Label::getLabelId).toList();
@@ -107,6 +118,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         article.setArticleId(articleId);
         UserDTO user = BaseUtil.getUserFromLocal();
+        Long userId = user.getUserId();
         article.setUserId(user.getUserId());
         article.setArticleTitle(map.get("articleTitle").toString());
         article.setArticleContent(map.get("articleContent").toString());
@@ -119,31 +131,40 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             return ResultInfo.fail("添加失败");
         }
 
-        String msgTitle = messageUtil.getArticleMessage("", article.getArticleTitle());
+//        String msgTitle = messageUtil.getArticleMessage("", article.getArticleTitle());
 
-        String key = RedisConstant.ARTICLE_INFO + articleId;
-        redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
-        // 如果是草稿，无需推送
-        if (article.getIsArticle() == 0) return ResultInfo.success("保存成功");
-        // 将文章推送到关注者的收件箱中
-        String followKey = RedisConstant.FAN_USER_LIST + user.getUserId();
-        Set<String> followers = redisTemplate.opsForSet().members(followKey);
-        if (followers != null && !followers.isEmpty()) {
-            List<Long> list = followers.stream().map(Long::parseLong).toList();
-            list.forEach(id -> {
-                // 异步保存消息
-                asyncExecutor.execute(() -> {
-                    // 遍历添加到收件箱中
-                    Long msgId = idUtil.nextId("msg");
-                    Message message = new Message(msgId, user.getUserId(), id, msgTitle, MsgType.PUBLISH_ARTICLE, articleId.toString());
-                    boolean isSaved = messageService.save(message);
-                    if (!isSaved) {
-                        log.error("消息保存失败:{}", msgId);
-                    }
-                    redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + id, msgId + "", System.currentTimeMillis());
-                });
-            });
-        }
+//        String key = RedisConstant.ARTICLE_INFO + articleId;
+//        redisUtil.saveObjAsJson(key, article, RedisConstant.ARTICLE_INFO_TTL, TimeUnit.DAYS);
+        // TODO：推送文章给关注者
+//        // 如果是草稿，无需推送
+//        if (article.getIsArticle() == 0) return ResultInfo.success("保存成功");
+//        // 将文章推送到关注者的收件箱中
+//        String followKey = RedisConstant.FAN_USER_LIST + user.getUserId();
+//        Set<String> followers = redisTemplate.opsForSet().members(followKey);
+//        if (followers != null && !followers.isEmpty()) {
+//            List<Long> list = followers.stream().map(Long::parseLong).toList();
+//            list.forEach(id -> {
+//                // 异步保存消息
+//                asyncExecutor.execute(() -> {
+//                    // 遍历添加到收件箱中
+//                    Long msgId = idUtil.nextId(Message.class);
+//                    Message message = new Message(msgId, user.getUserId(), id, msgTitle, MsgTypeEnum.PUBLISH_ARTICLE, articleId.toString());
+//                    boolean isSaved = messageService.saveActivityMessage(message);
+//                    if (!isSaved) {
+//                        log.error("消息保存失败:{}", msgId);
+//                    }
+//                    redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + id, msgId + "", System.currentTimeMillis());
+//                });
+//            });
+//        }
+        ActivityData build = ActivityData.builder().articleId(articleId).articleTitle(article.getArticleTitle()).build();
+        Activity activity = Activity.builder().userId(userId).targetId(userId)
+                .createTime(new Date())
+                .type(ActivityEnum.ARTICLE_PUBLISH.getActivityEventId())
+                .activityData(build).build();
+
+        activityEventPublisher.publish(activity);
+
 
         return ResultInfo.success(articleId);
 
@@ -201,14 +222,19 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    public ResultInfo getArticleListByUserId(Long userId, Integer page, Integer size) {
-        Page<Article> articlePage = new Page<>(page, size);
+    public ResultInfo<?> getArticleListByUserId(PageBaseReqWithUserId pageBaseReq) {
+        Long userId = pageBaseReq.getUserId();
+        if (userId == null) userId = BaseUtil.getUserFromLocal().getUserId();
+        Page<Article> articlePage = new Page<>(pageBaseReq.getPageNo(), pageBaseReq.getPageSize());
         articleMapper.selectPage(articlePage, new QueryChainWrapper<>(articleMapper).eq("user_id", userId).eq("is_article", 1).orderByDesc("article_update_date").getWrapper());
         return ResultInfo.success(articlePage);
     }
 
     @Override
-    public ResultInfo getArticlesListByUserId(Long userId, Integer page, Integer size) {
+    public ResultInfo getArticlesListByUserId(PageBaseReq pageBaseReq) {
+        Long userId = BaseUtil.getUserFromLocal().getUserId();
+        Integer page = pageBaseReq.getPageNo();
+        Integer size = pageBaseReq.getPageSize();
         Page<Article> articlePage = new Page<>(page, size);
         articleMapper.selectPage(articlePage, new QueryChainWrapper<>(articleMapper).eq("user_id", userId).eq("is_article", 0).orderByDesc("article_update_date").getWrapper());
         return ResultInfo.success(articlePage);
@@ -237,7 +263,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 isSuccess = update().eq("article_id", articleId).setSql("article_collects = article_collects + 1").update();
                 redisTemplate.delete(RedisConstant.ARTICLE_INFO + articleId);
                 // 异步保存消息
-                asySaveMsg(article, user, 2);
+//                asySaveMsg(article, user, 2);
+
+                // 封装活动事件
+                ActivityData activityData = ActivityData.builder().articleId(articleId).articleTitle(article.getArticleTitle())
+                        .userId(userId).build();
+                Activity activity = Activity.builder().type(ActivityEnum.ARTICLE_COLLECT.getActivityEventId())
+                        .targetId(article.getUserId()).userId(userId)
+                        .createTime(new Date()).activityData(activityData).build();
+                activityEventPublisher.publish(activity);
             } catch (Exception e) {
                 log.error("收藏失败", e);
             }
@@ -372,7 +406,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 isSuccess = update().eq("article_id", articleId).setSql("article_likes = article_likes + 1").update();
                 redisTemplate.delete(RedisConstant.ARTICLE_INFO + articleId);
                 // 异步保存消息
-                asySaveMsg(article, user, 3);
+//                asySaveMsg(article, user, 3);
+                // 封装活动事件
+                ActivityData activityData = ActivityData.builder().articleId(articleId).articleTitle(article.getArticleTitle())
+                        .userId(userId).build();
+                Activity activity = Activity.builder().type(ActivityEnum.ARTICLE_LIKE.getActivityEventId())
+                        .targetId(article.getUserId()).userId(userId)
+                        .createTime(new Date()).activityData(activityData).build();
+                activityEventPublisher.publish(activity);
+
             } catch (Exception e) {
                 log.error("点赞失败", e);
             }
@@ -391,7 +433,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     private void asySaveMsg(Article article, UserDTO user, Integer type) {
         asyncExecutor.execute(() -> {
             // 遍历添加到收件箱中
-            Long msgId = idUtil.nextId("msg");
+            Long msgId = idUtil.nextId(Message.class);
             Long receiverId = article.getUserId();
             String msgTitle = "";
             switch (type) {
@@ -401,16 +443,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 case 3 -> msgTitle = messageUtil.getLikeMessage("", article.getArticleTitle());
             }
 
-            MsgType m;
+            MsgTypeEnum m;
             if (type == 0) {
-                m = MsgType.PUBLISH_ARTICLE;
+                m = MsgTypeEnum.PUBLISH_ARTICLE;
             } else if (type == 1) {
-                m = MsgType.COMMENT_ARTICLE;
+                m = MsgTypeEnum.COMMENT_ARTICLE;
             } else if (type == 2) {
-                m = MsgType.COLLECT_ARTICLE;
+                m = MsgTypeEnum.COLLECT_ARTICLE;
             }
             {
-                m = MsgType.LIKE_ARTICLE;
+                m = MsgTypeEnum.LIKE_ARTICLE;
             }
 
             Message message = new Message(msgId, user.getUserId(), receiverId, msgTitle, article.getArticleId().toString());

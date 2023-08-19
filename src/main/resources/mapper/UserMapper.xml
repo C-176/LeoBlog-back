@@ -5,26 +5,27 @@
 <mapper namespace="com.chen.LeoBlog.mapper.UserMapper">
 
     <resultMap id="BaseResultMap" type="com.chen.LeoBlog.po.User">
-            <id property="userId" column="user_id" jdbcType="BIGINT"/>
-            <result property="userName" column="user_name" jdbcType="VARCHAR"/>
-            <result property="userEmail" column="user_email" jdbcType="VARCHAR"/>
-            <result property="userPhone" column="user_phone" jdbcType="VARCHAR"/>
-            <result property="userPassword" column="user_password" jdbcType="VARCHAR"/>
-            <result property="userNickname" column="user_nickname" jdbcType="VARCHAR"/>
-            <result property="userProfilePhoto" column="user_profile_photo" jdbcType="VARCHAR"/>
-            <result property="userIntro" column="user_intro" jdbcType="VARCHAR"/>
-            <result property="userSex" column="user_sex" jdbcType="TINYINT"/>
-            <result property="userPos" column="user_pos" jdbcType="VARCHAR"/>
-            <result property="userBirthday" column="user_birthday" jdbcType="DATE"/>
-            <result property="userCertification" column="user_certification" jdbcType="VARCHAR"/>
-            <result property="userEducation" column="user_education" jdbcType="VARCHAR"/>
-            <result property="userIndustry" column="user_industry" jdbcType="VARCHAR"/>
-            <result property="userRegisterDate" column="user_register_date" jdbcType="TIMESTAMP"/>
-            <result property="userBgPic" column="user_bg_pic" jdbcType="VARCHAR"/>
+        <id property="userId" column="user_id" jdbcType="BIGINT"/>
+        <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+        <result property="userEmail" column="user_email" jdbcType="VARCHAR"/>
+        <result property="userPhone" column="user_phone" jdbcType="VARCHAR"/>
+        <result property="userPassword" column="user_password" jdbcType="VARCHAR"/>
+        <result property="userNickname" column="user_nickname" jdbcType="VARCHAR"/>
+        <result property="userProfilePhoto" column="user_profile_photo" jdbcType="VARCHAR"/>
+        <result property="userIntro" column="user_intro" jdbcType="VARCHAR"/>
+        <result property="userSex" column="user_sex" jdbcType="TINYINT"/>
+        <result property="userPos" column="user_pos" jdbcType="VARCHAR"/>
+        <result property="userBirthday" column="user_birthday" jdbcType="DATE"/>
+        <result property="userCertification" column="user_certification" jdbcType="VARCHAR"/>
+        <result property="userEducation" column="user_education" jdbcType="VARCHAR"/>
+        <result property="userIndustry" column="user_industry" jdbcType="VARCHAR"/>
+        <result property="userRegisterDate" column="user_register_date" jdbcType="TIMESTAMP"/>
+        <result property="userBgPic" column="user_bg_pic" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        user_id,user_name,user_email,
+        user_id
+        ,user_name,user_email,
         user_phone,user_password,user_nickname,
         user_profile_photo,user_intro,user_sex,
         user_pos,user_birthday,user_certification,
@@ -38,6 +39,11 @@
                  JOIN lb_permission p ON rp.permission_id = p.permission_id
         WHERE ur.user_id = #{userId};
 
+    </select>
+    <select id="getRoleByUserId" resultType="java.lang.Integer">
+        SELECT role_id
+        FROM lb_user_role
+        WHERE user_id = #{userId};
     </select>
 
 </mapper>

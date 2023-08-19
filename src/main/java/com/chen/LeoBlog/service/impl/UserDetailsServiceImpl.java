@@ -32,8 +32,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if (s.contains("@")) user = userService.query().eq("user_email", s).one();
         else user = userService.query().eq("user_name", s).one();
         if (user == null) throw new UsernameNotFoundException("用户不存在");
-
-
         // 查询用户的权限信息
         Set<String> permissions = userMapper.getPermissions(user.getUserId());
         // 返回UserDetails的实现类

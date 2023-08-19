@@ -1,5 +1,6 @@
 package com.chen.LeoBlog.controller;
 
+import com.chen.LeoBlog.annotation.Anonymous;
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.service.CommentService;
 import lombok.extern.slf4j.Slf4j;
@@ -16,11 +17,13 @@ public class CommentController {
     @Resource
     private CommentService commentService;
 
+    @Anonymous
     @GetMapping("/list/article/{articleId}")
     public ResultInfo getCommentList(@PathVariable("articleId") Long articleId) {
         return commentService.getCommentList(articleId);
     }
 
+    @Anonymous
     @GetMapping("/{commentId}")
     public ResultInfo getComment(@PathVariable("commentId") Long commentId) {
         return commentService.getComment(commentId);
@@ -45,6 +48,7 @@ public class CommentController {
     public ResultInfo deleteComment(@PathVariable("commentId") Long commentId) {
         return commentService.deleteComment(commentId);
     }
+
     @DeleteMapping("/delete/user/{userId}")
     public ResultInfo deleteCommentByUserId(@PathVariable("userId") Long userId) {
         return commentService.deleteCommentByUserId(userId);

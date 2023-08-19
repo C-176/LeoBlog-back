@@ -1,14 +1,17 @@
 package com.chen.LeoBlog.constant;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 
 public class BaseConstant {
 
     // 文件上传路径
     public static final String UPLOAD_IMG_PATH = "source/upload/images/";
     public static final String UPLOAD_VIDEO_PATH = "source/upload/videos/";
+    //token 过期时间
+    public static final Long LONG_TOKEN_TTL = 7 * 60 * 60 * 24L;
+    public static final Long SHORT_TOKEN_TTL = 2 * 60 * 60 * 24L;
+
+    // 默认昵称前缀
+    public static final String NICKNAME_PREFIX = "lber_";
 
 
     // 验证码html
@@ -124,5 +127,4 @@ public class BaseConstant {
             "\n" +
             "\n" +
             "</html>";
-
 }

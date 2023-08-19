@@ -2,10 +2,12 @@ package com.chen.LeoBlog.dto;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
-public class UserDTO {
+public class UserDTO implements Serializable {
+
     private Long userId;
     private String userName;
     private String userNickname;
@@ -47,4 +49,8 @@ public class UserDTO {
     private String userIndustry;
     private String userBgPic;
     private Date userRegisterDate;
+    // 用户ip
+    private String IP;
+    // 用户角色
+    private Integer roleId;
 }

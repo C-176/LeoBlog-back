@@ -1,17 +1,28 @@
 spring:
+  # 模板
   profiles:
     active: dev
+
+  #热部署相关
+  devtools:
+    restart:
+      enabled: true
+      poll-interval: 3000
+      quiet-period: 1000
+      additional-paths: src/main
 
 server:
   ssl:
     enabled: false
+  servlet:
+    context-path: /
 
 mybatis-plus:
   global-config:
     enable-sql-runner: true
-
-
-yuapi:
-  client:
-    access-key: 6pvaa8742g7bcdsh86k7hv9ci2yrhdci
-    secret-key: oykm15xymum35dh19ehooc2bvjxuy4zh
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.chen.LeoBlog.po
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+#      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

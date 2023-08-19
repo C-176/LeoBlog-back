@@ -3,12 +3,11 @@ package com.chen.LeoBlog.controller;
 
 import com.chen.LeoBlog.base.ResultInfo;
 import com.chen.LeoBlog.service.MessageService;
+import com.chen.LeoBlog.vo.request.CursorPageBaseReqWithUserId;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -19,13 +18,18 @@ public class MessageController {
     private MessageService messageService;
 
     @GetMapping("/user/{userId}/{page}/{size}")
-    public ResultInfo getMsgByUserId(@PathVariable("userId") Long userId, @PathVariable(value="page") Integer page, @PathVariable("size") Integer size) {
+    public ResultInfo getMsgByUserId(@PathVariable("userId") Long userId, @PathVariable(value = "page") Integer page, @PathVariable("size") Integer size) {
         return messageService.getMsgByUserId(userId, page, size);
     }
 
-    @GetMapping("/{offset}/{lastScore}")
-    public ResultInfo getMsgFromBox(@PathVariable("offset") Integer offset, @PathVariable("lastScore") Long lastScore) {
-        return messageService.getMsgFromBox(offset, lastScore);
+    @PostMapping("/message/cursor/list")
+    public ResultInfo<?> getMsgFromBox(@RequestBody CursorPageBaseReqWithUserId cursorPageBaseReq) {
+        return messageService.getMsgFromBox(cursorPageBaseReq);
+    }
+
+    @PostMapping("/activity/cursor/list")
+    public ResultInfo<?> getActivity(@RequestBody CursorPageBaseReqWithUserId cursorPageBaseReq) {
+        return messageService.getActivity(cursorPageBaseReq);
     }
 
 

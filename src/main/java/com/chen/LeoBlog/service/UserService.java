@@ -1,8 +1,8 @@
 package com.chen.LeoBlog.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.chen.LeoBlog.Do.UserDO;
 import com.chen.LeoBlog.base.ResultInfo;
+import com.chen.LeoBlog.dto.UserLoginOrRegisterDTO;
 import com.chen.LeoBlog.po.User;
 
 import java.util.Map;
@@ -14,13 +14,13 @@ import java.util.Map;
  */
 public interface UserService extends IService<User> {
 
-    ResultInfo login(UserDO user);
+    ResultInfo login(UserLoginOrRegisterDTO user);
 
-    ResultInfo register(Map<String, Object> map);
+    ResultInfo register(UserLoginOrRegisterDTO userLoginOrRegisterDTO);
 
     ResultInfo confirmPhone(String phone);
 
-    ResultInfo confirmEmail(String email);
+    void confirmEmail(String email);
 
     ResultInfo getNameByIds(String ids);
 
@@ -32,7 +32,7 @@ public interface UserService extends IService<User> {
 
     ResultInfo getSecurityUser(Long userId);
 
-    ResultInfo updateSecurityUser(Map<String, Object> map, Long userId);
+    ResultInfo updateSecurityUser(UserLoginOrRegisterDTO userLoginOrRegisterDTO);
 
     ResultInfo changePwd(Map<String, Object> map);
 

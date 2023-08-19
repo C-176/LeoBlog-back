@@ -2,15 +2,16 @@ package com.chen.LeoBlog.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chen.LeoBlog.base.MsgType;
+import com.chen.LeoBlog.activityEvent.Activity;
+import com.chen.LeoBlog.activityEvent.ActivityData;
+import com.chen.LeoBlog.activityEvent.ActivityEnum;
 import com.chen.LeoBlog.base.ResultInfo;
-import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.mapper.CommentMapper;
 import com.chen.LeoBlog.po.Article;
 import com.chen.LeoBlog.po.Comment;
-import com.chen.LeoBlog.po.Message;
 import com.chen.LeoBlog.po.User;
+import com.chen.LeoBlog.publisher.ActivityEventPublisher;
 import com.chen.LeoBlog.service.ArticleService;
 import com.chen.LeoBlog.service.CommentService;
 import com.chen.LeoBlog.service.MessageService;
@@ -46,6 +47,8 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
     private IdUtil idUtil;
     @Autowired
     private StringRedisTemplate redisTemplate;
+    @Resource
+    private ActivityEventPublisher activityEventPublisher;
 
     /**
      * 获取某一用户的评论总数
@@ -172,16 +175,38 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         articleService.update().setSql("article_comments = article_comments + 1").eq("article_id", comment.getArticleId()).update();
         Article article = articleService.query().eq("article_id", comment.getArticleId()).one();
 
-        String commentMessage = messageUtil.getCommentMessage("", article.getArticleTitle());
+//        String commentMessage = messageUtil.getCommentMessage("", article.getArticleTitle());
 
         Long receiverId = comment.getReceiverId();
         // 确认接收者不是自己
-        if (!comment.getUserId().equals(receiverId)) {
-            Long msgId = idUtil.nextId("msg");
-            messageService.save(new Message(msgId, comment.getUserId(), receiverId, commentMessage, MsgType.COMMENT_ARTICLE, comment.getArticleId() + ""));
-            redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + receiverId, msgId + "", System.currentTimeMillis());
-        }
+        Long userId = comment.getUserId();
+//        if (!userId.equals(receiverId)) {
+//            Long msgId = idUtil.nextId(Message.class);
+//            messageService.saveActivityMessage(new Message(msgId, userId, receiverId, commentMessage, MsgTypeEnum.COMMENT_ARTICLE, comment.getArticleId() + ""));
+//            redisTemplate.opsForZSet().add(RedisConstant.MESSAGE_BOX_PREFIX + receiverId, msgId + "", System.currentTimeMillis());
+//        }
+        ActivityData activityData = ActivityData.builder().userId(receiverId)
+                .commentId(comment.getCommentParentId())
+                .commentContent(comment.getCommentContent())
+                .articleId(article.getArticleId())
+                .articleTitle(article.getArticleTitle())
+                .build();
+        Integer type;
         if (isSuccess) {
+            // 判断是回复还是评论
+            if (comment.getCommentParentId() == -1) {
+                // 一级，评论
+                // 封装活动事件()
+                type = ActivityEnum.ARTICLE_COMMENT.getActivityEventId();
+            } else {
+                type = ActivityEnum.ARTICLE_COMMENT_REPLY.getActivityEventId();
+            }
+
+            Activity activity = Activity.builder()
+                    .type(type)
+                    .targetId(receiverId).userId(userId)
+                    .createTime(new Date()).activityData(activityData).build();
+            activityEventPublisher.publish(activity);
             return ResultInfo.success("评论成功");
         }
         return ResultInfo.fail("评论失败");

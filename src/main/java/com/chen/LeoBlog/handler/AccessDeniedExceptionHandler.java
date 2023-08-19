@@ -1,19 +1,16 @@
 package com.chen.LeoBlog.handler;
 
 import com.chen.LeoBlog.base.ResultInfo;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import com.chen.LeoBlog.exception.HttpErrorEnum;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class AccessDeniedExceptionHandler {
 
-    @ExceptionHandler(AccessDeniedException.class)
-    @ResponseBody
+    @ExceptionHandler({AccessDeniedException.class})
     public ResultInfo<String> handleAccessDeniedException() {
-        return ResultInfo.fail(HttpStatus.FORBIDDEN.value(), "权限不足，访问被拒绝");
+        return ResultInfo.fail(HttpErrorEnum.FORBIDDEN);
     }
 }

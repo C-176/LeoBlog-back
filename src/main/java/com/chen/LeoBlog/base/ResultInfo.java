@@ -1,6 +1,8 @@
 package com.chen.LeoBlog.base;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.chen.LeoBlog.enums.ErrorEnum;
+import com.chen.LeoBlog.vo.response.CursorPageBaseResp;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,7 +33,7 @@ public class ResultInfo<T> {
         return new ResultInfo<>(200, "success", data);
     }
 
-    public static ResultInfo<Map<String,Object>> success(Page<?> page) {
+    public static ResultInfo<Map<String, Object>> success(Page<?> page) {
         Map<String, Object> map = new HashMap<>();
         map.put("total", page.getTotal());
         map.put("pages", page.getPages());
@@ -55,5 +57,13 @@ public class ResultInfo<T> {
 
     public static ResultInfo<String> fail(Integer code, String data) {
         return new ResultInfo<>(code, "error", data);
+    }
+
+    public static ResultInfo<String> fail(ErrorEnum errorEnum) {
+        return new ResultInfo<>(errorEnum.getErrorCode(), errorEnum.getErrorMsg(), null);
+    }
+
+    public static ResultInfo<?> success(CursorPageBaseResp<?> cursorPageBaseResp) {
+        return new ResultInfo<>(200, "success", cursorPageBaseResp);
     }
 }

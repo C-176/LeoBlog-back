@@ -6,17 +6,17 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.AuthenticationException;
 
 import java.security.Key;
 import java.util.Date;
 
 public class JWTUtil {
-    public static  final Long EXPIRATION_TIME = 3600000L; // 1 hour
+    public static final Long EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000L; // 7days
     public static final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     // 生成 JWT
     public static String generateJwt(String subject, long expirationMs) {
-        if(expirationMs == 0) expirationMs = EXPIRATION_TIME;
         return Jwts.builder()
                 .setSubject(subject)
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
@@ -24,13 +24,33 @@ public class JWTUtil {
                 .compact();
     }
 
+    // 生成 JWT
+    public static String generateJwt(String subject) {
+
+        return Jwts.builder()
+                .setSubject(subject)
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     // 解析 JWT
-    public static Jws<Claims> parseJwt(String jwt) {
-        Jws<Claims> claimsJws = Jwts.parserBuilder()
+    public static Jws<Claims> parseJwt(String jwt) throws AuthenticationException {
+        return Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
                 .parseClaimsJws(jwt);
-        return claimsJws;
+    }
+
+    // 解析 JWT中的userId
+    public static Long parseJwtUserId(String jwt) throws AuthenticationException {
+        Jws<Claims> claimsJws = parseJwt(jwt);
+        return Long.parseLong(claimsJws.getBody().getSubject());
+    }
+
+    public static Date parseJwtExpiration(String jwt) throws AuthenticationException {
+        Jws<Claims> claimsJws = parseJwt(jwt);
+        return claimsJws.getBody().getExpiration();
     }
 
     // 验证 JWT 签名
@@ -44,6 +64,11 @@ public class JWTUtil {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static boolean verify(String jwt, String token) {
+        Jws<Claims> claimsJws = parseJwt(jwt);
+        return claimsJws.getBody().getSubject().equals(token) && verifyJwtSignature(jwt);
     }
 
     public static void main(String[] args) {
