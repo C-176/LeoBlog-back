@@ -19,10 +19,7 @@ public class SocketPool {
      * @param session 设置session
      */
     public static void add(Long keyId, Session session) {
-
         if (keyId != null && session != null) {
-            //生成一个唯一的keyId
-//            UUID uuid = UUID.randomUUID(true);
             ONLINE_USER_SESSIONS.put(keyId, session);
         }
     }

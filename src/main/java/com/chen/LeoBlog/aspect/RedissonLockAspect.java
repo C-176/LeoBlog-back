@@ -24,12 +24,10 @@ public class RedissonLockAspect {
     @Resource
     private RedisUtil redisUtil;
 
-    @Around("@annotation(com.chen.LeoBlog.annotation.RedissonLock)")
-    public Object around(ProceedingJoinPoint joinPoint) {
+    @Around("@annotation(redissonLock)")
+    public Object around(ProceedingJoinPoint joinPoint, RedissonLock redissonLock) {
         // 获取切点方法
         Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
-        // 获取注解
-        RedissonLock redissonLock = method.getAnnotation(RedissonLock.class);
         //计算分布式锁的key：默认方法限定名+注解排名（可能多个）
         String prefix = StrUtil.isBlank(redissonLock.prefixKey()) ? SpElUtils.getMethodKey(method) : redissonLock.prefixKey();
         Object key = SpElUtils.parseSpEl(method, joinPoint.getArgs(), redissonLock.key());

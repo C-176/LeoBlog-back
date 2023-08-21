@@ -1,4 +1,4 @@
-package com.chen.LeoBlog.activityEvent;
+package com.chen.LeoBlog.event;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEvent;
