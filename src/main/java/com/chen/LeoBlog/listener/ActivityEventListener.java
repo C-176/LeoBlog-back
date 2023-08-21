@@ -2,7 +2,7 @@ package com.chen.LeoBlog.listener;
 
 import cn.hutool.json.JSONUtil;
 import com.chen.LeoBlog.activityEvent.Activity;
-import com.chen.LeoBlog.activityEvent.ActivityEvent;
+import com.chen.LeoBlog.event.ActivityEvent;
 import com.chen.LeoBlog.service.KafkaService;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;

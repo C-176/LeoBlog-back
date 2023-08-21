@@ -1,7 +1,7 @@
 package com.chen.LeoBlog.publisher;
 
 import com.chen.LeoBlog.activityEvent.Activity;
-import com.chen.LeoBlog.activityEvent.ActivityEvent;
+import com.chen.LeoBlog.event.ActivityEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
