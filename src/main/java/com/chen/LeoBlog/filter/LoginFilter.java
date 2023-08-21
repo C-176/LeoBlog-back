@@ -5,16 +5,17 @@ import com.chen.LeoBlog.base.SocketPool;
 import com.chen.LeoBlog.config.ThreadPoolConfig;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.decorator.HttpServletRequestDecorator;
+import com.chen.LeoBlog.exception.HttpErrorEnum;
 import com.chen.LeoBlog.po.LoginUser;
 import com.chen.LeoBlog.service.impl.UserServiceImpl;
 import com.chen.LeoBlog.utils.JWTUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
+import com.chen.LeoBlog.utils.WebUtil;
 import com.chen.LeoBlog.websocket.SocketService;
 import com.chen.LeoBlog.websocket.vo.WebSocketData;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -64,21 +65,20 @@ public class LoginFilter extends OncePerRequestFilter {
             userId = String.valueOf(JWTUtil.parseJwtUserId(token));
             date = JWTUtil.parseJwtExpiration(token);
             Date now = new Date();
-            if (now.after(new Date(date.getTime() - earlyRefresh)) && now.before(date)) {
+            // 提前刷新验证token
+            if (now.after(new Date(date.getTime() - earlyRefresh))) {
                 httpServletRequest = refreshAccessToken(httpServletRequest, userId);
-                filterChain.doFilter(httpServletRequest, httpServletResponse);
-                return;
             }
         } catch (ExpiredJwtException e) {
-            date = JWTUtil.parseJwtExpiration(refreshToken);
-            if (date.before(new Date())) {
-                log.error("refreshToken已过期");
-                throw new AccountExpiredException("用户信息已过期，请重新登录");
+            try {
+                JWTUtil.parseJwtExpiration(refreshToken);
+            } catch (Exception exception) {
+                log.error("refreshToken 过期");
+                WebUtil.responseMsg(httpServletResponse, HttpErrorEnum.UNAUTHORIZED);
+                return;
             }
             userId = JWTUtil.parseJwtUserId(refreshToken) + "";
             httpServletRequest = refreshAccessToken(httpServletRequest, userId);
-            filterChain.doFilter(httpServletRequest, httpServletResponse);
-            return;
         } catch (Exception e) {
             filterChain.doFilter(httpServletRequest, httpServletResponse);
             return;
@@ -86,7 +86,14 @@ public class LoginFilter extends OncePerRequestFilter {
         // 获取用户信息
         LoginUser loginUser = redisUtil.getObj(RedisConstant.USER_LOGIN + userId, LoginUser.class);
         if (loginUser == null) {
-            throw new AccountExpiredException("用户信息已过期，请重新登录");
+            WebUtil.responseMsg(httpServletResponse, HttpErrorEnum.UNAUTHORIZED);
+            return;
+        }
+        if (!refreshToken.equals(loginUser.getRefreshToken())) {
+            log.error("refreshToken 不一致");
+            socketService.sendToSession(socketService.getSessionMap().get(Long.parseLong(userId)), WebSocketData.forceOfflineResponse());
+            WebUtil.responseMsg(httpServletResponse, HttpErrorEnum.UNAUTHORIZED);
+            return;
         }
         log.debug("用户信息：{}", loginUser);
         // 将用户信息存入到SecurityContext中
@@ -104,7 +111,6 @@ public class LoginFilter extends OncePerRequestFilter {
         //
         HttpServletRequestDecorator httpServletRequestDecorator = new HttpServletRequestDecorator(httpServletRequest);
         httpServletRequestDecorator.setHeader("Authorization", accessToken);
-        System.out.println(httpServletRequestDecorator.getHeader("Authorization").equals(accessToken));
         asyncExecutor.execute(() -> {
             // 调用websocket 推送新的 accessToken
             socketService.sendToSession(SocketPool.getSessionMap().get(Long.parseLong(userId)), WebSocketData.accessToken(accessToken));
