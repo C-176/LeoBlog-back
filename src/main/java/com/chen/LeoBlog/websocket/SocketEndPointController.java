@@ -25,7 +25,7 @@ import java.util.*;
 @Slf4j
 @CrossOrigin
 // 表明这是一个websocket服务的端点
-@ServerEndpoint("/net/{userId}/{token}")
+@ServerEndpoint("/net/{userId}/{refreshToken}")
 public class SocketEndPointController {
     public static SocketEndPointController socketEndpoint; //public极为重要
 
@@ -53,7 +53,7 @@ public class SocketEndPointController {
 
 
     @OnOpen
-    public void onOpen(@PathParam("userId") Long userId, @PathParam("token") String token, Session session) {
+    public void onOpen(@PathParam("userId") Long userId, @PathParam("refreshToken") String token, Session session) {
         socketEndpoint.socketService.onOpen(userId, token, session);
     }
 

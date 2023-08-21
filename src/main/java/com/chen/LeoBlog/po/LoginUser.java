@@ -23,6 +23,7 @@ public class LoginUser implements UserDetails, Serializable {
 
     private User user;
     private Collection<String> permissions;
+    private String refreshToken;
     private transient volatile List<GrantedAuthority> authorities;
 
 

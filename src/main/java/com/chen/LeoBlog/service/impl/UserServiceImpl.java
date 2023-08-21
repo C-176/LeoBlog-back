@@ -88,8 +88,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (StrUtil.isBlank(password)) return ResultInfo.fail("密码不能为空");
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(userName, userLoginOrRegisterDTO.getUserPassword());
-
-
         Authentication authenticate;
         try {
             authenticate = authenticationManager.authenticate(authenticationToken);
@@ -127,6 +125,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         BeanUtil.copyProperties(user, userDto);
         String refreshToken = JWTUtil.generateJwt(userDto.getUserId().toString());
         String accessToken = JWTUtil.generateJwt(userDto.getUserId().toString(), accessTokenExpireTime);
+        loginUser.setRefreshToken(refreshToken);
         redisTemplate.opsForValue().set(RedisConstant.USER_LOGIN + user.getUserId(), JSONUtil.toJsonStr(loginUser), JWTUtil.EXPIRATION_TIME, TimeUnit.MILLISECONDS);
         LoginVO build = LoginVO.builder().accessToken(accessToken).refreshToken(refreshToken).user(userDto).build();
         return ResultInfo.success(build);
