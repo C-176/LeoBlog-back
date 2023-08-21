@@ -53,17 +53,14 @@ public class AuthorizedInterceptor implements HandlerInterceptor {
 
         //如果请求体中没有token，说明没有登陆过。（要求登陆必须带着token）
         if (token == null || StrUtil.isBlank(token) || refreshToken == null || StrUtil.isBlank(refreshToken)) {
-            log.error("token为空");
             WebUtil.responseMsg(response, HttpErrorEnum.UNAUTHORIZED);
             return false;
         }
-//        log.error("{}|>{}", request.getRequestURI(), token);
 
         String userId;
         try {
             userId = String.valueOf(JWTUtil.parseJwtUserId(token));
         } catch (Exception e) {
-            log.error("{},token解析失败,{}", request.getRequestURI(), token);
             WebUtil.responseMsg(response, HttpErrorEnum.UNAUTHORIZED);
             return false;
         }

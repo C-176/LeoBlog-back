@@ -14,6 +14,7 @@ import com.chen.LeoBlog.frequencycontrol.FrequencyControlStrategyFactory;
 import com.chen.LeoBlog.frequencycontrol.FrequencyControlUtil;
 import com.chen.LeoBlog.po.ChatConnection;
 import com.chen.LeoBlog.po.ChatRecord;
+import com.chen.LeoBlog.po.LoginUser;
 import com.chen.LeoBlog.service.ChatConnectionService;
 import com.chen.LeoBlog.service.ChatRecordService;
 import com.chen.LeoBlog.service.UserService;
@@ -81,7 +82,7 @@ public class SocketService {
                 assert basic != null;
                 basic.sendText(JSONUtil.toJsonStr(webSocketData));
             } catch (Exception e) {
-                log.error("消息发送异常，异常情况: {}", e.getMessage());
+                log.error("{},消息发送异常，异常情况: {}", webSocketData, e.getMessage());
                 AssertUtil.isFalse(false, CommonErrorEnum.SYSTEM_ERROR);
                 return false;
             }
@@ -108,8 +109,12 @@ public class SocketService {
         SocketPool.getSessionMap().forEach((keyId, session) -> WebSocketData.systemNotice(message));
     }
 
-    public void onOpen(Long userId, String token, Session session) {
-        if (StrUtil.isBlank(token)) {
+    public void add(Long userId, Session session) {
+        SocketPool.add(userId, session);
+    }
+
+    public void onOpen(Long userId, String refreshToken, Session session) {
+        if (StrUtil.isBlank(refreshToken)) {
             sendToSession(session, WebSocketData.authFailResponse());
             try {
                 session.close();
@@ -119,7 +124,7 @@ public class SocketService {
             return;
         }
         try {
-            String jwtUserId = String.valueOf(JWTUtil.parseJwtUserId(token));
+            String jwtUserId = String.valueOf(JWTUtil.parseJwtUserId(refreshToken));
             if (!jwtUserId.equals(userId.toString())) {
                 sendToSession(session, WebSocketData.authFailResponse());
                 try {
@@ -144,8 +149,13 @@ public class SocketService {
             sendToSession(session, WebSocketData.authFailResponse());
             return;
         }
+        LoginUser loginUser = JSONUtil.toBean(s, LoginUser.class);
+        if (!refreshToken.equals(loginUser.getRefreshToken())) {
+            sendToSession(session, WebSocketData.authFailResponse());
+            return;
+        }
         webSocketTimer.updateHeartbeatRecord(userId);
-        SocketPool.add(userId, session); // 添加到在线用户列表
+        add(userId, session); // 添加到在线用户列表
         // 添加到redis在线用户中
         redisTemplate.opsForZSet().add(key, userId.toString(), new Date().getTime());
 
@@ -175,8 +185,7 @@ public class SocketService {
             case HEART_BEAT -> heartBeatHandler(session, webSocketData);
             case SINGLE_CHAT -> {
                 try {
-                    FrequencyControlUtil.executeWithFrequencyControl(FrequencyControlStrategyFactory.TOKEN_BUCKET_FREQUENCY_CONTROLLER,
-                            build, () -> singleChatHandler(webSocketData, onlineUsers));
+                    FrequencyControlUtil.executeWithFrequencyControl(FrequencyControlStrategyFactory.TOKEN_BUCKET_FREQUENCY_CONTROLLER, build, () -> singleChatHandler(webSocketData, onlineUsers));
                 } catch (FrequencyControlException ex) {
                     if (session != null) {
                         sendToSession(session, WebSocketData.frequencyControlNotice());
@@ -194,8 +203,19 @@ public class SocketService {
     }
 
     public void heartBeatHandler(Session session, WebSocketDataWithUserId webSocketData) {
-        sendToSession(session, WebSocketData.heartBeatResponse());
-        webSocketTimer.updateHeartbeatRecord(webSocketData.getUserId());
+        Session oldSession = getSessionMap().get(webSocketData.getUserId());
+        if (oldSession != session) {
+            sendToSession(session, WebSocketData.forceOfflineResponse());
+            try {
+                session.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            sendToSession(session, WebSocketData.heartBeatResponse());
+            webSocketTimer.updateHeartbeatRecord(webSocketData.getUserId());
+        }
+
     }
 
     public void groupChatHandler(WebSocketDataWithUserId webSocketData, Map<Long, Session> onlineUsers) {
@@ -278,7 +298,7 @@ public class SocketService {
     }
 
     public void onClose(Long userId) {
-        SocketPool.remove(userId);
+//        SocketPool.remove(userId);
         redisTemplate.opsForZSet().remove(key, userId.toString());
         Map<Long, Session> sessionMap = getSessionMap();
         // 向好友发送下线通知
