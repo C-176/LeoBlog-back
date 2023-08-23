@@ -10,10 +10,12 @@ import lombok.Getter;
 @AllArgsConstructor
 @Getter
 public enum HttpErrorEnum implements ErrorEnum {
+    BAD_REQUEST(400, "请求参数有误"),
     UNAUTHORIZED(401, "登录失效，请重新登录"),
     FORBIDDEN(403, "权限不足，禁止访问"),
-    NOT_FOUND(404, "请求资源不存在，请重试"),
-    SERVER_ERROR(500, "服务器异常"),
+    NOT_FOUND(404, "请求资源不存在"),
+    SERVER_ERROR(500, "服务器异常，请稍后重试"),
+    GATEWAY_ERROR(502, "网关异常，请稍后重试"),
     ;
     private Integer httpCode;
     private String msg;

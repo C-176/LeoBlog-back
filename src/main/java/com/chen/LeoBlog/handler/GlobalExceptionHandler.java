@@ -1,6 +1,10 @@
-package com.chen.LeoBlog.exception;
+package com.chen.LeoBlog.handler;
 
 import com.chen.LeoBlog.base.ResultInfo;
+import com.chen.LeoBlog.exception.BusinessException;
+import com.chen.LeoBlog.exception.CommonErrorEnum;
+import com.chen.LeoBlog.exception.FrequencyControlException;
+import com.chen.LeoBlog.exception.HttpErrorEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -53,7 +57,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = Exception.class)
     public ResultInfo<?> systemExceptionHandler(Exception e) {
         log.error("system exception！The reason is：{}", e.getMessage(), e);
-        return ResultInfo.fail(HttpErrorEnum.UNAUTHORIZED);
+        return ResultInfo.fail(HttpErrorEnum.SERVER_ERROR);
     }
 
     /**

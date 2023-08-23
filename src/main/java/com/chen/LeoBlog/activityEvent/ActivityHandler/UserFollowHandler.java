@@ -4,10 +4,8 @@ import cn.hutool.json.JSONUtil;
 import com.chen.LeoBlog.activityEvent.Activity;
 import com.chen.LeoBlog.activityEvent.ActivityEnum;
 import com.chen.LeoBlog.constant.RedisConstant;
-import com.chen.LeoBlog.dto.UserDTO;
 import com.chen.LeoBlog.po.Message;
 import com.chen.LeoBlog.service.UserService;
-import com.chen.LeoBlog.utils.BaseUtil;
 import com.chen.LeoBlog.utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -50,15 +48,13 @@ public class UserFollowHandler extends AbstractActivityHandler {
 
     @Override
     public void saveActivityEventToRedis(Message message) {
-        UserDTO userFromLocal = BaseUtil.getUserFromLocal();
-
         Long userId = message.getUserId();
         Long receiverId = message.getReceiverId();
         Set<Long> idSet = Set.of(userId, receiverId);
         for (long id : idSet) {
             String key = RedisConstant.ACTIVITY_USER + id;
             try {
-                if (!userFromLocal.getUserId().equals(id)) {
+                if (!receiverId.equals(id)) {
                     message.setMessageTitle("关注了我");
                     message.setMessageRedirect("/user/" + userId);
                 }
