@@ -1,6 +1,6 @@
 package com.chen.LeoBlog.config;
 
-import com.chen.LeoBlog.factory.MyThreadFactory;
+import com.chen.LeoBlog.decorator.ThreadFactoryDecorator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -44,7 +44,7 @@ public class ThreadPoolConfig implements AsyncConfigurer {
         executor.setThreadNamePrefix("blog-executor-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());//满了调用线程执行，认为重要任务
         // todo: 装饰器模式应用，增加线程异常处理
-        executor.setThreadFactory(new MyThreadFactory(executor));
+        executor.setThreadFactory(new ThreadFactoryDecorator(executor));
         executor.initialize();
         return executor;
     }
@@ -57,7 +57,7 @@ public class ThreadPoolConfig implements AsyncConfigurer {
         executor.setQueueCapacity(1000);//支持同时推送1000人
         executor.setThreadNamePrefix("ws-executor-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());//满了直接丢弃，默认为不重要消息推送
-        executor.setThreadFactory(new MyThreadFactory(executor));
+        executor.setThreadFactory(new ThreadFactoryDecorator(executor));
         executor.initialize();
         return executor;
     }
@@ -70,7 +70,7 @@ public class ThreadPoolConfig implements AsyncConfigurer {
         executor.setQueueCapacity(15);
         executor.setThreadNamePrefix("aichat-executor-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());//满了直接丢弃，默认为不重要消息推送
-        executor.setThreadFactory(new MyThreadFactory(executor));
+        executor.setThreadFactory(new ThreadFactoryDecorator(executor));
         return executor;
     }
 }

@@ -1,4 +1,4 @@
-package com.chen.LeoBlog.factory;
+package com.chen.LeoBlog.decorator;
 
 import com.chen.LeoBlog.handler.GlobalUncaughtExceptionHandler;
 import lombok.AllArgsConstructor;
@@ -8,7 +8,7 @@ import java.util.concurrent.ThreadFactory;
 
 @Slf4j
 @AllArgsConstructor
-public class MyThreadFactory implements ThreadFactory {
+public class ThreadFactoryDecorator implements ThreadFactory {
 
     private final ThreadFactory factory;
 
