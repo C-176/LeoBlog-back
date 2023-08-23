@@ -1,6 +1,7 @@
 package com.chen.LeoBlog.config;
 
 import com.chen.LeoBlog.interceptors.AuthorizedInterceptor;
+import com.chen.LeoBlog.interceptors.RewriteRespInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +20,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Resource
     private AuthorizedInterceptor authorizedInterceptor;
+    @Resource
+    private RewriteRespInterceptor rewriteRespInterceptor;
 
     // 静态资源映射
     @Override
@@ -46,6 +49,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         registry.addInterceptor(authorizedInterceptor).addPathPatterns("/**")
                 .excludePathPatterns("/source/**", "/v2/**", "/favicon.ico"
                 );
+        registry.addInterceptor(rewriteRespInterceptor).addPathPatterns("/**");
     }
 
     //    CORS跨域配置
