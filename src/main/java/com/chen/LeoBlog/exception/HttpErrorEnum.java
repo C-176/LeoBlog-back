@@ -4,6 +4,8 @@ import com.chen.LeoBlog.enums.ErrorEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Map;
+
 /**
  * Description: 业务校验异常码
  */
@@ -28,6 +30,10 @@ public enum HttpErrorEnum implements ErrorEnum {
     @Override
     public String getErrorMsg() {
         return msg;
+    }
+
+    public static Map<String, Object> toMap(ErrorEnum errorEnum) {
+        return Map.of("code", errorEnum.getErrorCode(), "msg", errorEnum.getErrorMsg());
     }
 
 

@@ -3,8 +3,6 @@ package com.chen.LeoBlog.exception;
 import com.chen.LeoBlog.enums.ErrorEnum;
 import lombok.Data;
 
-import javax.websocket.Session;
-
 /**
  * 自定义限流异常
  */
@@ -22,7 +20,8 @@ public class FrequencyControlException extends RuntimeException {
      */
     protected String errorMsg;
 
-    private Session session;
+    private Long receiveId;
+
 
     public FrequencyControlException() {
         super("频率限制");
@@ -39,9 +38,9 @@ public class FrequencyControlException extends RuntimeException {
         this.errorMsg = error.getErrorMsg();
     }
 
-    public FrequencyControlException(Session session) {
+    public FrequencyControlException(Long receiveId) {
         super("频率限制");
-        this.session = session;
+        this.receiveId = receiveId;
     }
 
 }
