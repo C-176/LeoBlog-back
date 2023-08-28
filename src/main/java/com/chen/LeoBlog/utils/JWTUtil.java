@@ -6,14 +6,19 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.AuthenticationException;
 
+import javax.annotation.Resource;
 import java.security.Key;
 import java.util.Date;
 
+@Resource
 public class JWTUtil {
     public static final Long EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000L; // 7days
-    public static final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    @Value("${jwt.secret}")
+    private static String secret = "The JWT JWA Specification (RFC 7518, Section 3.2) states that keys used with HMAC-SHA algorithms MUST have a size >= 256 bits";
+    public static final Key key = Keys.hmacShaKeyFor(secret.getBytes());
 
     // 生成 JWT
     public static String generateJwt(String subject, long expirationMs) {
@@ -49,8 +54,18 @@ public class JWTUtil {
     }
 
     public static Date parseJwtExpiration(String jwt) throws AuthenticationException {
-        Jws<Claims> claimsJws = parseJwt(jwt);
+        Jws<Claims> claimsJws;
+        claimsJws = parseJwt(jwt);
         return claimsJws.getBody().getExpiration();
+    }
+
+    public static boolean isExpired(String jwt) {
+        try {
+            parseJwt(jwt);
+            return false;
+        } catch (Exception e) {
+            return true;
+        }
     }
 
     // 验证 JWT 签名

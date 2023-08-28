@@ -27,8 +27,9 @@ public class WebSocketData {
     }
 
     // 上线通知
-    public static WebSocketData onlineNotice(Long userId) {
+    public static WebSocketData onlineNotice(Long userId, Long receiveId) {
         return WebSocketData.builder()
+                .receiveId(receiveId)
                 .type(WebScoketDataEnum.ONLINE_NOTICE.getType())
                 .content(userId + "")
                 .sendTime(new Date())
@@ -36,8 +37,9 @@ public class WebSocketData {
     }
 
     // 下线通知
-    public static WebSocketData offlineNotice(Long userId) {
+    public static WebSocketData offlineNotice(Long userId, Long receiveId) {
         return WebSocketData.builder()
+                .receiveId(receiveId)
                 .type(WebScoketDataEnum.OFFLINE_NOTICE.getType())
                 .content(userId + "")
                 .sendTime(new Date())
@@ -45,8 +47,9 @@ public class WebSocketData {
     }
 
     // 验证失败
-    public static WebSocketData authFailResponse() {
+    public static WebSocketData authFailResponse(Long receiveId) {
         return WebSocketData.builder()
+                .receiveId(receiveId)
                 .type(WebScoketDataEnum.AUTH_FAIL_RESPONSE.getType())
                 .content("token非法")
                 .sendTime(new Date())
@@ -54,8 +57,9 @@ public class WebSocketData {
     }
 
     // 强制下线
-    public static WebSocketData forceOfflineResponse() {
+    public static WebSocketData forceOfflineResponse(Long receiveId) {
         return WebSocketData.builder()
+                .receiveId(receiveId)
                 .type(WebScoketDataEnum.FORCE_OFFLINE_RESPONSE.getType())
                 .content("连接不活跃，强制下线")
                 .sendTime(new Date())
@@ -72,9 +76,12 @@ public class WebSocketData {
                 .build();
     }
 
+    public static final Long SYSTEM_NOTICE_RECEIVE_ID = 101L;
+
     // 系统通知
     public static WebSocketData systemNotice(String content) {
         return WebSocketData.builder()
+                .receiveId(SYSTEM_NOTICE_RECEIVE_ID)
                 .type(WebScoketDataEnum.SYSTEM_NOTICE.getType())
                 .content(content)
                 .sendTime(new Date())
@@ -92,24 +99,27 @@ public class WebSocketData {
     }
 
     // 活动事件通知
-    public static WebSocketData newActivityNotice(String content) {
+    public static WebSocketData newActivityNotice(Long receiveId, String content) {
         return WebSocketData.builder()
+                .receiveId(receiveId)
                 .type(WebScoketDataEnum.NEW_ACTIVITY_NOTICE.getType())
                 .content(content)
                 .sendTime(new Date())
                 .build();
     }
 
-    public static WebSocketData accessToken(String accessToken) {
+    public static WebSocketData accessToken(String accessToken, Long receiveId) {
         return WebSocketData.builder()
+                .receiveId(receiveId)
                 .type(WebScoketDataEnum.REFRESH_ACCESSION.getType())
                 .content(accessToken)
                 .sendTime(new Date())
                 .build();
     }
 
-    public static WebSocketData frequencyControlNotice() {
+    public static WebSocketData frequencyControlNotice(Long receiveId) {
         return WebSocketData.builder()
+                .receiveId(receiveId)
                 .type(WebScoketDataEnum.FREQUENCY_CONTROL_NOTICE.getType())
                 .content("请求过于频繁或发消息过于频繁")
                 .sendTime(new Date())
