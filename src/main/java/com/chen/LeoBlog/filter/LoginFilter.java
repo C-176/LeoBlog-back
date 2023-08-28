@@ -16,6 +16,7 @@ import com.chen.LeoBlog.websocket.vo.WebSocketData;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.authentication.AccountExpiredException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -65,20 +66,21 @@ public class LoginFilter extends OncePerRequestFilter {
             userId = String.valueOf(JWTUtil.parseJwtUserId(token));
             date = JWTUtil.parseJwtExpiration(token);
             Date now = new Date();
-            // 提前刷新验证token
-            if (now.after(new Date(date.getTime() - earlyRefresh))) {
+            if (now.after(new Date(date.getTime() - earlyRefresh)) && now.before(date)) {
                 httpServletRequest = refreshAccessToken(httpServletRequest, userId);
+                filterChain.doFilter(httpServletRequest, httpServletResponse);
+                return;
             }
         } catch (ExpiredJwtException e) {
-            try {
-                JWTUtil.parseJwtExpiration(refreshToken);
-            } catch (Exception exception) {
-                log.error("refreshToken 过期");
-                WebUtil.responseMsg(httpServletResponse, HttpErrorEnum.UNAUTHORIZED);
-                return;
+            date = JWTUtil.parseJwtExpiration(refreshToken);
+            if (date.before(new Date())) {
+                log.error("refreshToken已过期");
+                throw new AccountExpiredException("用户信息已过期，请重新登录");
             }
             userId = JWTUtil.parseJwtUserId(refreshToken) + "";
             httpServletRequest = refreshAccessToken(httpServletRequest, userId);
+            filterChain.doFilter(httpServletRequest, httpServletResponse);
+            return;
         } catch (Exception e) {
             filterChain.doFilter(httpServletRequest, httpServletResponse);
             return;
@@ -86,12 +88,6 @@ public class LoginFilter extends OncePerRequestFilter {
         // 获取用户信息
         LoginUser loginUser = redisUtil.getObj(RedisConstant.USER_LOGIN + userId, LoginUser.class);
         if (loginUser == null) {
-            WebUtil.responseMsg(httpServletResponse, HttpErrorEnum.UNAUTHORIZED);
-            return;
-        }
-        if (!refreshToken.equals(loginUser.getRefreshToken())) {
-            log.error("refreshToken 不一致");
-            socketService.sendToSession(socketService.getSessionMap().get(Long.parseLong(userId)), WebSocketData.forceOfflineResponse());
             WebUtil.responseMsg(httpServletResponse, HttpErrorEnum.UNAUTHORIZED);
             return;
         }
@@ -113,7 +109,7 @@ public class LoginFilter extends OncePerRequestFilter {
         httpServletRequestDecorator.setHeader("Authorization", accessToken);
         asyncExecutor.execute(() -> {
             // 调用websocket 推送新的 accessToken
-            socketService.sendToSession(SocketPool.getSessionMap().get(Long.parseLong(userId)), WebSocketData.accessToken(accessToken));
+            socketService.publish(SocketPool.getSessionMap().get(Long.parseLong(userId)), WebSocketData.accessToken(accessToken, Long.parseLong(userId)));
         });
         return httpServletRequestDecorator;
     }
