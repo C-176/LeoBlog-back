@@ -36,6 +36,7 @@ public class ControllerLogAspect {
         HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
         String method = request.getMethod();
         String uri = request.getRequestURI();
+        if (uri.contains("/error")) return joinPoint.proceed();
         //如果参数有HttpRequest,ServletResponse，直接移除，不打印这些
         List<Object> paramList = Stream.of(joinPoint.getArgs()).filter(args -> !(args instanceof ServletRequest)).filter(args -> !(args instanceof ServletResponse)).collect(Collectors.toList());
         String printParamStr = paramList.size() == 1 ? JSONUtil.toJsonStr(paramList.get(0) + "") : JSONUtil.toJsonStr(paramList);

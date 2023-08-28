@@ -1,4 +1,4 @@
-package com.chen.LeoBlog.websocket.vo;
+package com.chen.LeoBlog.vo.request;
 
 import com.chen.LeoBlog.dto.UserDTO;
 import lombok.Builder;

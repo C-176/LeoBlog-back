@@ -6,6 +6,7 @@ import com.chen.LeoBlog.activityEvent.ActivityEnum;
 import com.chen.LeoBlog.activityEvent.ActivityHandlerFactory;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.po.Message;
+import com.chen.LeoBlog.publisher.SendMessageEventPublisher;
 import com.chen.LeoBlog.service.MessageService;
 import com.chen.LeoBlog.utils.IdUtil;
 import com.chen.LeoBlog.utils.RedisUtils;
@@ -16,9 +17,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import javax.websocket.Session;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 @Slf4j
@@ -30,6 +29,8 @@ public abstract class AbstractActivityHandler {
     private MessageService messageService;
     @Resource
     private SocketService socketService;
+    @Resource
+    private SendMessageEventPublisher sendMessageEventPublisher;
 
     @PostConstruct
     protected void init() {
@@ -42,14 +43,7 @@ public abstract class AbstractActivityHandler {
         Long userId = activity.getUserId();
         Long targetId = activity.getTargetId();
         // 将活动事件转为Message类型
-        return Message.builder().userId(userId)
-                .messageId(idUtil.nextId(Message.class)).receiverId(targetId)
-                .messageUpdateTime(activity.getCreateTime())
-                .messageTitle(generateTitle(activity))
-                .messageContent(generateContent(activity))
-                .messageRedirect(generateRouter(activity))
-                .messageType(getActivityEventType().getActivityEventId())
-                .build();
+        return Message.builder().userId(userId).messageId(idUtil.nextId(Message.class)).receiverId(targetId).messageUpdateTime(activity.getCreateTime()).messageTitle(generateTitle(activity)).messageContent(generateContent(activity)).messageRedirect(generateRouter(activity)).messageType(getActivityEventType().getActivityEventId()).build();
     }
 
     public abstract String generateContent(Activity activity);
@@ -74,15 +68,10 @@ public abstract class AbstractActivityHandler {
     }
 
     public void sendActivityEventToSession(Message message) {
-        Map<Long, Session> sessionMap = socketService.getSessionMap();
         HashSet<Long> ids = new HashSet<>();
         ids.add(message.getUserId());
         ids.add(message.getReceiverId());
-        ids.forEach(id -> {
-            if (sessionMap.containsKey(id)) {
-                socketService.sendToSession(sessionMap.get(id), WebSocketData.newActivityNotice(JSONUtil.toJsonStr(message)));
-            }
-        });
+        ids.forEach(id -> sendMessageEventPublisher.publish(WebSocketData.newActivityNotice(id, JSONUtil.toJsonStr(message))));
     }
 
     // 执行事件

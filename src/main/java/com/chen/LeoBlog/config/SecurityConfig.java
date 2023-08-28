@@ -11,7 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.condition.PatternsRequestCondition;
@@ -47,10 +47,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
 
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and().authorizeRequests()
-                .antMatchers("/source/**", "/v2/**", "/favicon.ico").permitAll().anyRequest().authenticated();
-        http.addFilterBefore(loginFilter, UsernamePasswordAuthenticationFilter.class);
+        http.formLogin().disable()
+                .csrf().disable().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and().authorizeRequests(a -> a.antMatchers("/source/**", "/v2/**", "/favicon.ico").permitAll().anyRequest().authenticated())
+        ;
+        http.addFilterAfter(loginFilter, ExceptionTranslationFilter.class);
         // 添加验证失败和鉴权失败异常处理器，统一响应格式
         http.exceptionHandling()
                 .authenticationEntryPoint(securityExceptionHandler)

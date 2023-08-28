@@ -14,6 +14,7 @@ import com.chen.LeoBlog.frequencycontrol.FrequencyControlStrategyFactory;
 import com.chen.LeoBlog.frequencycontrol.FrequencyControlUtil;
 import com.chen.LeoBlog.po.ChatConnection;
 import com.chen.LeoBlog.po.ChatRecord;
+import com.chen.LeoBlog.publisher.SendMessageEventPublisher;
 import com.chen.LeoBlog.service.ChatConnectionService;
 import com.chen.LeoBlog.service.ChatRecordService;
 import com.chen.LeoBlog.service.UserService;
@@ -45,7 +46,6 @@ import java.util.Set;
 
 @Service
 @Slf4j
-
 @EnableAspectJAutoProxy(exposeProxy = true)
 public class SocketService {
 
@@ -64,6 +64,8 @@ public class SocketService {
     @Resource(name = ThreadPoolConfig.WS_EXECUTOR)
     @Lazy
     private ThreadPoolTaskExecutor asyncExecutor;
+    @Resource
+    private SendMessageEventPublisher sendMessageEventPublisher;
 
     @Resource
     private WebSocketTimer webSocketTimer;
@@ -72,6 +74,11 @@ public class SocketService {
         return SocketPool.getSessionMap();
     }
 
+
+    public boolean publish(Session session, WebSocketData webSocketData) {
+        sendMessageEventPublisher.publish(webSocketData);
+        return true;
+    }
 
     public boolean sendToSession(Session session, WebSocketData webSocketData) {
         if (session == null) return false;
@@ -98,7 +105,7 @@ public class SocketService {
         members.forEach(member -> {
             Session session = sessionMap.get(Long.valueOf(member));
             if (session != null) {
-                sendToSession(session, webSocketData);
+                publish(session, webSocketData);
             }
         });
     }
@@ -110,7 +117,7 @@ public class SocketService {
 
     public void onOpen(Long userId, String token, Session session) {
         if (StrUtil.isBlank(token)) {
-            sendToSession(session, WebSocketData.authFailResponse());
+            sendToSession(session, WebSocketData.authFailResponse(userId));
             try {
                 session.close();
             } catch (IOException e) {
@@ -121,7 +128,7 @@ public class SocketService {
         try {
             String jwtUserId = String.valueOf(JWTUtil.parseJwtUserId(token));
             if (!jwtUserId.equals(userId.toString())) {
-                sendToSession(session, WebSocketData.authFailResponse());
+                sendToSession(session, WebSocketData.authFailResponse(userId));
                 try {
                     session.close();
                 } catch (IOException e) {
@@ -130,7 +137,7 @@ public class SocketService {
                 return;
             }
         } catch (Exception e) {
-            sendToSession(session, WebSocketData.authFailResponse());
+            sendToSession(session, WebSocketData.authFailResponse(userId));
             try {
                 session.close();
             } catch (IOException ex) {
@@ -141,7 +148,7 @@ public class SocketService {
         String s = redisTemplate.opsForValue().get(RedisConstant.USER_LOGIN + userId);
         //如果查不到信息，或者为空，说明用户登陆信息，已经过期，需要重新登陆。
         if (StrUtil.isBlank(s)) {
-            sendToSession(session, WebSocketData.authFailResponse());
+            sendToSession(session, WebSocketData.authFailResponse(userId));
             return;
         }
         webSocketTimer.updateHeartbeatRecord(userId);
@@ -154,9 +161,9 @@ public class SocketService {
         Set<String> friends = redisTemplate.opsForZSet().range(RedisConstant.CHAT_FRIEND_LIST + userId, 0, -1L);
         if (friends == null) return;
         friends.forEach(f -> {
-            if (sessionMap.containsKey(Long.parseLong(f))) {
-                sendToSession(sessionMap.get(Long.parseLong(f)), WebSocketData.onlineNotice(userId));
-            }
+//            if (sessionMap.containsKey(Long.parseLong(f))) {
+            publish(sessionMap.get(Long.parseLong(f)), WebSocketData.onlineNotice(userId, Long.parseLong(f)));
+//            }
         });
 
 
@@ -179,7 +186,7 @@ public class SocketService {
                             build, () -> singleChatHandler(webSocketData, onlineUsers));
                 } catch (FrequencyControlException ex) {
                     if (session != null) {
-                        sendToSession(session, WebSocketData.frequencyControlNotice());
+                        sendToSession(session, WebSocketData.frequencyControlNotice(ex.getReceiveId()));
                     }
                 } catch (Throwable e) {
                     throw new RuntimeException(e);
@@ -194,12 +201,17 @@ public class SocketService {
     }
 
     public void heartBeatHandler(Session session, WebSocketDataWithUserId webSocketData) {
+        Long userId = webSocketData.getUserId();
         sendToSession(session, WebSocketData.heartBeatResponse());
-        webSocketTimer.updateHeartbeatRecord(webSocketData.getUserId());
+        webSocketTimer.updateHeartbeatRecord(userId);
     }
 
     public void groupChatHandler(WebSocketDataWithUserId webSocketData, Map<Long, Session> onlineUsers) {
-        sendGroupMessage(webSocketData, onlineUsers);
+        String content = webSocketData.getContent();
+        webSocketData.setReceiveId(GROUP_CHAT_ID_LONG);
+        ChatRecord record = JSONUtil.toBean(content, ChatRecord.class);
+        asyncSaveRecord(record);
+        publish(null, webSocketData);
     }
 
     public void aiChatHandler(WebSocketDataWithUserId webSocketData, Map<Long, Session> onlineUsers) {
@@ -229,28 +241,24 @@ public class SocketService {
         asyncSaveRecord(build);
     }
 
+    public static final Long GROUP_CHAT_ID_LONG = -1L;
+    public static final Long AI_CHAT_ID_LONG = 1L;
+
     @FrequencyControl(target = FrequencyControl.Target.EL, spEl = "#webSocketData", time = 5, count = 2)
     public void singleChatHandler(WebSocketDataWithUserId webSocketData, Map<Long, Session> onlineUsers) {
         String jsonStr = webSocketData.getContent();
         ChatRecord record = JSONUtil.toBean(jsonStr, ChatRecord.class);
         Long receiverId = record.getReceiverId();
 
-        if (receiverId == -1) { // 聊天室消息
-            asyncExecutor.execute(() -> {
-                onlineUsers.forEach((k, v) -> sendToSession(onlineUsers.get(k), WebSocketData.singleChatData(-1L, JSONUtil.toJsonStr(record))));
-                asyncSaveRecord(record);
-            });
-        } else if (receiverId == 1) {
-            aiChatHandler(webSocketData, onlineUsers);
-        } else {
-            Session session = onlineUsers.get(receiverId);
-            if (session != null)
-                sendToSession(session, WebSocketData.singleChatData(receiverId, JSONUtil.toJsonStr(record)));
-            session = onlineUsers.get(record.getUserId());
-            if (session != null)
-                sendToSession(session, WebSocketData.singleChatData(receiverId, JSONUtil.toJsonStr(record)));
-            asyncSaveRecord(record);
-        }
+
+        Session session = onlineUsers.get(receiverId);
+        if (session != null)
+            publish(session, WebSocketData.singleChatData(receiverId, JSONUtil.toJsonStr(record)));
+        session = onlineUsers.get(record.getUserId());
+        if (session != null)
+            sendToSession(session, WebSocketData.singleChatData(receiverId, JSONUtil.toJsonStr(record)));
+        asyncSaveRecord(record);
+
 
     }
 
@@ -285,11 +293,11 @@ public class SocketService {
         Set<String> friends = redisTemplate.opsForZSet().range(RedisConstant.CHAT_FRIEND_LIST + userId, 0, -1L);
         if (friends == null) return;
         friends.forEach(f -> {
-            if (sessionMap.containsKey(Long.parseLong(f))) {
-                // 使用线程池异步发送消息
-                //TODO:为什么使用线程池发送消息，而不是直接发送消息
-                asyncExecutor.execute(() -> sendToSession(sessionMap.get(Long.parseLong(f)), WebSocketData.offlineNotice(userId)));
-            }
+//            if (sessionMap.containsKey(Long.parseLong(f))) {
+            // 使用线程池异步发送消息
+            //TODO:为什么使用线程池发送消息，而不是直接发送消息
+            publish(sessionMap.get(Long.parseLong(f)), WebSocketData.offlineNotice(userId, Long.parseLong(f)));
+//            }
         });
     }
 

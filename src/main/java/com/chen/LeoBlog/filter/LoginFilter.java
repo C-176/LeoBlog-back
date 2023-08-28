@@ -5,10 +5,12 @@ import com.chen.LeoBlog.base.SocketPool;
 import com.chen.LeoBlog.config.ThreadPoolConfig;
 import com.chen.LeoBlog.constant.RedisConstant;
 import com.chen.LeoBlog.decorator.HttpServletRequestDecorator;
+import com.chen.LeoBlog.exception.HttpErrorEnum;
 import com.chen.LeoBlog.po.LoginUser;
 import com.chen.LeoBlog.service.impl.UserServiceImpl;
 import com.chen.LeoBlog.utils.JWTUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
+import com.chen.LeoBlog.utils.WebUtil;
 import com.chen.LeoBlog.websocket.SocketService;
 import com.chen.LeoBlog.websocket.vo.WebSocketData;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -86,7 +88,8 @@ public class LoginFilter extends OncePerRequestFilter {
         // 获取用户信息
         LoginUser loginUser = redisUtil.getObj(RedisConstant.USER_LOGIN + userId, LoginUser.class);
         if (loginUser == null) {
-            throw new AccountExpiredException("用户信息已过期，请重新登录");
+            WebUtil.responseMsg(httpServletResponse, HttpErrorEnum.UNAUTHORIZED);
+            return;
         }
         log.debug("用户信息：{}", loginUser);
         // 将用户信息存入到SecurityContext中
@@ -104,10 +107,9 @@ public class LoginFilter extends OncePerRequestFilter {
         //
         HttpServletRequestDecorator httpServletRequestDecorator = new HttpServletRequestDecorator(httpServletRequest);
         httpServletRequestDecorator.setHeader("Authorization", accessToken);
-        System.out.println(httpServletRequestDecorator.getHeader("Authorization").equals(accessToken));
         asyncExecutor.execute(() -> {
             // 调用websocket 推送新的 accessToken
-            socketService.sendToSession(SocketPool.getSessionMap().get(Long.parseLong(userId)), WebSocketData.accessToken(accessToken));
+            socketService.publish(SocketPool.getSessionMap().get(Long.parseLong(userId)), WebSocketData.accessToken(accessToken, Long.parseLong(userId)));
         });
         return httpServletRequestDecorator;
     }

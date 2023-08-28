@@ -65,7 +65,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(value = BusinessException.class)
     public ResultInfo<?> businessExceptionHandler(BusinessException e) {
-        log.info("business exception！The reason is：{}", e.getMessage(), e);
+        log.warn("business exception！The reason is：{}", e.getMessage(), e);
         return ResultInfo.fail(e.getErrorCode(), e.getMessage());
     }
 

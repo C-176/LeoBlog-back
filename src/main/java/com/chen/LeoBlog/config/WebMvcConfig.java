@@ -46,10 +46,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
          * excludePathPatterns("/api/user/{id}") 表示放行形如 /api/user/{id} 的请求路径，其中 {id} 表示一个变量，可以匹配任意字符串。
          * excludePathPatterns("/api/user/{id:[0-9]+}") 表示放行形如 /api/user/{id} 的请求路径，其中 {id:[0-9]+} 表示一个变量，只能匹配数字。
          */
+        registry.addInterceptor(rewriteRespInterceptor).addPathPatterns("/**");
         registry.addInterceptor(authorizedInterceptor).addPathPatterns("/**")
                 .excludePathPatterns("/source/**", "/v2/**", "/favicon.ico"
                 );
-        registry.addInterceptor(rewriteRespInterceptor).addPathPatterns("/**");
     }
 
     //    CORS跨域配置

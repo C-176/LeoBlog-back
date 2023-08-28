@@ -1,9 +1,9 @@
 package com.chen.LeoBlog.listener;
 
 import cn.hutool.json.JSONUtil;
-import com.chen.LeoBlog.activityEvent.Activity;
-import com.chen.LeoBlog.event.ActivityEvent;
+import com.chen.LeoBlog.event.SendMessageEvent;
 import com.chen.LeoBlog.service.KafkaService;
+import com.chen.LeoBlog.websocket.vo.WebSocketData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -12,15 +12,16 @@ import javax.annotation.Resource;
 
 @Component
 @Slf4j
-public class ActivityEventListener {
-    public static final String ACTIVITY_TOPIC = "activity";
+public class SendMessageEventListener {
+    public static final String MESSAGE_TOPIC = "message";
+
     @Resource
     private KafkaService kafkaService;
 
     @EventListener
-    public void onApplicationEvent(ActivityEvent<Activity> event) {
-        Activity activity = (Activity) event.getSource();
+    public void onApplicationEvent(SendMessageEvent event) {
+        WebSocketData source = (WebSocketData) event.getSource();
         // 发布到对应消息队列
-        kafkaService.sendMessage(ACTIVITY_TOPIC, JSONUtil.toJsonStr(activity));
+        kafkaService.sendMessage(MESSAGE_TOPIC, JSONUtil.toJsonStr(source));
     }
 }

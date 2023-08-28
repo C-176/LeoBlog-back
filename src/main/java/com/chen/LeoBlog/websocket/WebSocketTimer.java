@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import javax.websocket.Session;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -17,7 +16,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class WebSocketTimer {
     @Resource
     private SocketService socketService;
-    private static final long HEARTBEAT_TIMEOUT = 2 * 60_000; // 心跳超时时间，单位为毫秒
+    private static final long HEARTBEAT_TIMEOUT = 3 * 60_000; // 心跳超时时间，单位为毫秒
     private static final long HEARTBEAT_CHECK_INTERVAL = 60_000; // 心跳检查间隔，单位为毫秒
     // 用于存放客户端心跳记录的Map，使用ConcurrentSkipListMap保证线程安全，按照value 从大到小排序
     private final Map<Long, Long> clientHeartbeats = new ConcurrentSkipListMap<>();
@@ -42,7 +41,7 @@ public class WebSocketTimer {
     private void kickTimeoutClients() throws IOException {
         long currentTime = System.currentTimeMillis();
         // 遍历客户端心跳记录，检查是否超时
-        Map<Long, Session> sessionMap = SocketPool.getSessionMap();
+//        Map<Long, Session> sessionMap = SocketPool.getSessionMap();
 //        sessionMap.forEach((k, v) -> log.info("key: " + k + " value: " + v));
         for (Long clientId : clientHeartbeats.keySet()) {
             long lastHeartbeat = clientHeartbeats.get(clientId);
@@ -50,12 +49,12 @@ public class WebSocketTimer {
 
             // 执行踢出操作，例如断开与客户端的连接
             // 通知客户端被踢出
-            Session session = sessionMap.get(clientId);
-            if (session != null) {
-                socketService.sendToSession(session, WebSocketData.forceOfflineResponse());
-                SocketPool.remove(clientId);
-                session.close();
-            }
+//            Session session = sessionMap.get(clientId);
+//            if (session != null) {
+            socketService.publish(null, WebSocketData.forceOfflineResponse(clientId));
+            SocketPool.remove(clientId);
+//                session.close();
+//            }
             // 移除客户端的心跳记录
             clientHeartbeats.remove(clientId);
 
