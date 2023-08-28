@@ -22,7 +22,7 @@ import com.chen.LeoBlog.service.UserService;
 import com.chen.LeoBlog.utils.IdUtil;
 import com.chen.LeoBlog.utils.JWTUtil;
 import com.chen.LeoBlog.utils.RedisUtil;
-import com.chen.LeoBlog.websocket.vo.LoginVO;
+import com.chen.LeoBlog.vo.request.LoginVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
