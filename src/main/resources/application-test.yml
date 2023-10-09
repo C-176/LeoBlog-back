@@ -7,10 +7,16 @@ static-path:
 ip:
   http://localhost:8080/
 
-yuapi:
-  client:
-    access-key: *
-    secret-key: *
+ai:
+  yuapi:
+    client:
+      access-key: *
+      secret-key: *
+    sparkDesk:
+      appid: *
+      api-secret: *
+      api-Key: *
+
 
 spring:
   redis:
@@ -51,5 +57,3 @@ logging:
     com.chen.LeoBlog: info
   config: *
 
-imageHub:
-  api-key: *
