@@ -9,10 +9,10 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class BaseConfig {
-    @Value("${yuapi.client.access-key}")
+    @Value("${ai.yuapi.client.access-key}")
     String accessKey;
 
-    @Value("${yuapi.client.secret-key}")
+    @Value("${ai.yuapi.client.secret-key}")
     String secretKey;
 
     @Bean
