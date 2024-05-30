@@ -1,0 +1,23 @@
+{
+  "header": {
+    "app_id": "299d3700",
+    "uid": "40e96890-fc7f-435e-a7d4-dd1bb12bce7e"
+  },
+  "parameter": {
+    "chat": {
+      "domain": "general",
+      "temperature": 0.5,
+      "max_tokens": 1024
+    }
+  },
+  "payload": {
+    "message": {
+      "text": [
+        {
+          "role": "user",
+          "content": "介绍一下周杰伦"
+        }
+      ]
+    }
+  }
+}

@@ -75,7 +75,7 @@ public class ChatConnectionServiceImpl extends ServiceImpl<ChatConnectionMapper,
             list.forEach(user -> redisTemplate.opsForZSet().add(key, user.getChatUserId().toString(), user.getChatLastTime().getTime()));
             ids.addAll(list.stream().map(ChatConnection::getChatUserId).toList());
         }
-        ids.add(0, -1L);
+        if (!ids.contains(-1L)) ids.add(0, -1L);
 
         //将ids的方括号去掉
         String idsStr = ids.toString().substring(1, ids.toString().length() - 1);
