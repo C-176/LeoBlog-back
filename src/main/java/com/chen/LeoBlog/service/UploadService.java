@@ -28,8 +28,6 @@ public class UploadService {
     private String staticPath;
     @Value("${ip}")
     private String serverPrefix;
-    @Value("${imageHub.api-key}")
-    private String apiKey;
 
 
     /**
