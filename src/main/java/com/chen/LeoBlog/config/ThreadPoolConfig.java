@@ -43,7 +43,6 @@ public class ThreadPoolConfig implements AsyncConfigurer {
         executor.setQueueCapacity(200);
         executor.setThreadNamePrefix("blog-executor-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());//满了调用线程执行，认为重要任务
-        // todo: 装饰器模式应用，增加线程异常处理
         executor.setThreadFactory(new ThreadFactoryDecorator(executor));
         executor.initialize();
         return executor;
